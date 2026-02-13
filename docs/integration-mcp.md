@@ -353,36 +353,6 @@ async def test_search_empty_query():
 
 Package and deploy MCP server with validated tools.
 
-## Claude Code Integration
-
-RUNE specs can be used with Claude Code CLI:
-
-### Setup MCP Server with RUNE Tools
-
-```json
-// claude_desktop_config.json
-{
-  "mcpServers": {
-    "documents": {
-      "command": "python",
-      "args": ["-m", "mcp_server.server"]
-    }
-  }
-}
-```
-
-### Use with Claude Code
-
-```bash
-# Claude uses your MCP tools
-claude code "search documents about Python async"
-
-# Behind the scenes:
-# 1. Claude calls search_documents tool
-# 2. Tool implementation follows RUNE spec
-# 3. Returns structured results
-```
-
 ## Testing MCP Tools
 
 ### Unit Tests from RUNE Specs

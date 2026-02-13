@@ -1,8 +1,8 @@
 # Tools
 
-## Validation Script
+## Validator
 
-[`validate.py`](validate.py) is a standalone CLI tool for validating `.rune` files:
+[`validate.py`](validate.py) — CLI tool for validating `.rune` files against the RUNE spec standard.
 
 ```bash
 # Validate a single spec
@@ -18,6 +18,47 @@ python tools/validate.py --strict examples/basic/validate_email.rune
 python tools/validate.py --json examples/ > validation-report.json
 ```
 
-## Agent Tool Specs
+### CI/CD integration
 
-Example RUNE specifications for AI agent tools have been moved to [`examples/tool-specs/`](../examples/tool-specs/). These demonstrate how to specify tool contracts for multi-agent systems.
+Add to your pipeline to reject PRs with invalid specs:
+
+```yaml
+# GitHub Actions example
+- name: Validate RUNE specs
+  run: python tools/validate.py --strict specs/
+```
+
+## Parser
+
+[`parser.py`](parser.py) — Python library for parsing `.rune` files into structured objects.
+
+```python
+from parser import parse_rune_file, parse_rune_string, RUNEParser
+
+# Parse from file
+spec = parse_rune_file("specs/calculate_discount.rune")
+print(spec.name)        # "calculate_discount"
+print(spec.language)    # "python"
+print(spec.signature)   # "def calculate_discount(price: float, percentage: int) -> float"
+print(spec.test_count)  # 15
+print(spec.is_async)    # False
+
+# Parse from string
+spec = parse_rune_string(yaml_content)
+
+# Validate
+parser = RUNEParser()
+spec = parser.parse_file("my_spec.rune")
+errors = parser.validate(spec)
+if errors:
+    for err in errors:
+        print(f"  {err}")
+```
+
+### Dependencies
+
+Both tools require `pyyaml`:
+
+```bash
+pip install pyyaml
+```

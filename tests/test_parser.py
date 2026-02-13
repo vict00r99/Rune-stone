@@ -1,5 +1,5 @@
 """
-Tests for the RUNE spec parser (mcp-server/parser.py).
+Tests for the RUNE spec parser (tools/parser.py).
 
 Covers: parsing from strings, parsing from files, validation,
 edge cases, and data access on RUNESpec objects.
@@ -7,15 +7,14 @@ edge cases, and data access on RUNESpec objects.
 
 from __future__ import annotations
 
+import sys
 import textwrap
 from pathlib import Path
 
 import pytest
 
-# Adjust import path -- parser lives in mcp-server/ (hyphenated directory)
-import sys
-
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "mcp-server"))
+# Add tools/ to path so we can import parser module
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "tools"))
 
 from parser import (  # noqa: E402
     RUNEParser,
