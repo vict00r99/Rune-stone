@@ -1,0 +1,99 @@
+---
+meta:
+  name: validate_email
+  language: python
+  version: 1.0
+  tags: [validation, email, regex, data-processing]
+---
+
+RUNE: validate_email
+
+SIGNATURE: |
+  def validate_email(email: str) -> tuple[bool, str]
+
+INTENT: |
+  Validates an email address against RFC 5322 standards.
+  Returns a tuple of (is_valid, message) where message explains why validation failed.
+
+BEHAVIOR:
+  - WHEN email is empty or None THEN return (False, "Email cannot be empty")
+  - WHEN email does not contain @ THEN return (False, "Missing @ symbol")
+  - WHEN email has multiple @ symbols THEN return (False, "Multiple @ symbols not allowed")
+  - WHEN local part (before @) is empty THEN return (False, "Local part cannot be empty")
+  - WHEN domain part (after @) is empty THEN return (False, "Domain cannot be empty")
+  - WHEN domain does not contain a dot THEN return (False, "Domain must have at least one dot")
+  - WHEN email matches RFC 5322 pattern THEN return (True, "Valid email")
+  - OTHERWISE return (False, "Invalid email format")
+
+CONSTRAINTS:
+  - "email: must be a string"
+  - "length: maximum 254 characters (RFC 5321)"
+  - "local part: maximum 64 characters"
+  - "domain: maximum 253 characters"
+
+EDGE_CASES:
+  - "empty string: (False, 'Email cannot be empty')"
+  - "None: (False, 'Email cannot be empty')"
+  - "no @: (False, 'Missing @ symbol')"
+  - "multiple @: (False, 'Multiple @ symbols not allowed')"
+  - "@example.com: (False, 'Local part cannot be empty')"
+  - "user@: (False, 'Domain cannot be empty')"
+  - "user@domain: (False, 'Domain must have at least one dot')"
+  - "user@domain.c: valid (single char TLD)"
+  - "user+tag@example.com: valid (plus addressing)"
+  - "user.name@example.co.uk: valid (multiple dots)"
+  - "spaces in email: invalid"
+
+TESTS:
+  # Valid emails
+  - "validate_email('user@example.com')[0] == True"
+  - "validate_email('test.user@example.com')[0] == True"
+  - "validate_email('user+tag@example.co.uk')[0] == True"
+  - "validate_email('user_name@example-domain.com')[0] == True"
+  
+  # Invalid - missing parts
+  - "validate_email('')[0] == False"
+  - "validate_email('userexample.com')[0] == False"
+  - "validate_email('@example.com')[0] == False"
+  - "validate_email('user@')[0] == False"
+  - "validate_email('user@domain')[0] == False"
+  
+  # Invalid - multiple @
+  - "validate_email('user@@example.com')[0] == False"
+  - "validate_email('user@domain@example.com')[0] == False"
+  
+  # Invalid - spaces and special chars
+  - "validate_email('user name@example.com')[0] == False"
+  - "validate_email('user@exam ple.com')[0] == False"
+  
+  # Edge cases
+  - "validate_email('a@b.c')[0] == True"
+  - "validate_email('user@localhost.localdomain')[0] == True"
+
+DEPENDENCIES:
+  - "re (Python standard library)"
+
+EXAMPLES:
+  - |
+    # Basic validation
+    is_valid, message = validate_email("user@example.com")
+    if is_valid:
+        print("Email is valid!")
+    else:
+        print(f"Invalid: {message}")
+  - |
+    # Batch validation
+    emails = ["user@example.com", "invalid-email", "test@test.com"]
+    valid_emails = [e for e in emails if validate_email(e)[0]]
+    # Result: ["user@example.com", "test@test.com"]
+  - |
+    # Form validation
+    def process_signup(email: str):
+        is_valid, error = validate_email(email)
+        if not is_valid:
+            raise ValueError(f"Invalid email: {error}")
+        # Continue with signup...
+
+COMPLEXITY:
+  time: O(n)  # where n is length of email string
+  space: O(1)

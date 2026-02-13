@@ -1,0 +1,79 @@
+---
+meta:
+  name: check_free_shipping
+  language: python
+  version: 1.0
+  tags: [e-commerce, shipping, loyalty]
+---
+
+RUNE: check_free_shipping
+
+SIGNATURE: |
+  def check_free_shipping(subtotal: float, is_loyalty_member: bool, is_promo_period: bool = False) -> tuple[bool, str]
+
+INTENT: |
+  Determines if an order qualifies for free shipping based on subtotal,
+  loyalty membership, and promotional period status.
+  Returns (eligible, reason) explaining the decision.
+
+BEHAVIOR:
+  - WHEN subtotal < 0 THEN raise ValueError("Subtotal cannot be negative")
+  - WHEN is_loyalty_member is True THEN return (True, "Loyalty program member")
+  - WHEN is_promo_period is True AND subtotal >= 30 THEN return (True, "Promotional free shipping")
+  - WHEN is_promo_period is False AND subtotal >= 50 THEN return (True, "Order over $50")
+  - OTHERWISE return (False, "Minimum not met")
+
+CONSTRAINTS:
+  - "subtotal: non-negative float (pre-tax amount)"
+  - "is_loyalty_member: boolean"
+  - "is_promo_period: boolean, defaults to False"
+  - "threshold: $50 standard, $30 during promotions"
+
+EDGE_CASES:
+  - "subtotal = 0, not loyalty, not promo: not eligible"
+  - "subtotal = 0, loyalty member: eligible (loyalty overrides)"
+  - "subtotal = 50.00 exactly: eligible (standard threshold)"
+  - "subtotal = 49.99: not eligible"
+  - "subtotal = 30.00 exactly during promo: eligible"
+  - "subtotal = 29.99 during promo: not eligible"
+  - "loyalty member with $0 order: still eligible"
+  - "negative subtotal: raises ValueError"
+
+TESTS:
+  # Loyalty member - always free
+  - "check_free_shipping(10.00, True) == (True, 'Loyalty program member')"
+  - "check_free_shipping(0.00, True) == (True, 'Loyalty program member')"
+
+  # Standard threshold ($50)
+  - "check_free_shipping(50.00, False) == (True, 'Order over $50')"
+  - "check_free_shipping(75.00, False) == (True, 'Order over $50')"
+  - "check_free_shipping(49.99, False) == (False, 'Minimum not met')"
+
+  # Promo period threshold ($30)
+  - "check_free_shipping(30.00, False, True) == (True, 'Promotional free shipping')"
+  - "check_free_shipping(45.00, False, True) == (True, 'Promotional free shipping')"
+  - "check_free_shipping(29.99, False, True) == (False, 'Minimum not met')"
+
+  # Loyalty takes priority over promo
+  - "check_free_shipping(10.00, True, True) == (True, 'Loyalty program member')"
+
+  # Edge cases
+  - "check_free_shipping(0.00, False) == (False, 'Minimum not met')"
+  - "check_free_shipping(-1.00, False) raises ValueError"
+
+DEPENDENCIES: []
+
+EXAMPLES:
+  - |
+    # Check at checkout
+    subtotal = 45.00
+    eligible, reason = check_free_shipping(subtotal, is_loyalty_member=True)
+    if eligible:
+        print(f"Free shipping! ({reason})")
+    else:
+        print(f"Shipping fee applies: {reason}")
+    # Output: Free shipping! (Loyalty program member)
+
+COMPLEXITY:
+  time: O(1)
+  space: O(1)

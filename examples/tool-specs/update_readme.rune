@@ -1,0 +1,89 @@
+---
+meta:
+  name: update_readme
+  language: python
+  version: 1.0
+  tags: [agent-tool, documentation, readme]
+  agent: documentation
+---
+
+RUNE: update_readme
+
+SIGNATURE: |
+  def update_readme(
+      readme_path: str,
+      spec_paths: list[str],
+      section: str = "all"
+  ) -> str
+
+INTENT: |
+  Agent tool that updates a README file to reflect current RUNE specifications.
+  Regenerates sections like the example catalog, tool inventory, or feature list
+  based on actual .rune files. Used by the Documentation Agent.
+
+BEHAVIOR:
+  - WHEN readme_path is empty THEN raise ValueError("README path required")
+  - WHEN readme_path does not exist THEN raise FileNotFoundError
+  - WHEN spec_paths is empty THEN raise ValueError("At least one spec path required")
+  - READ existing README content
+  - DISCOVER and PARSE all .rune files from spec_paths
+  - WHEN section is "all" THEN update all auto-generated sections
+  - WHEN section is "examples" THEN update example catalog table
+  - WHEN section is "tools" THEN update tool inventory section
+  - WHEN section is "features" THEN update feature list from specs
+  - PRESERVE manually written sections (marked with <!-- manual --> comments)
+  - GENERATE updated content:
+    - Table of specs with name, language, description, test count
+    - Links to spec files
+    - Summary statistics
+  - RETURN updated README content as string
+
+CONSTRAINTS:
+  - "readme_path: path to an existing README.md file"
+  - "spec_paths: list of directories or file paths containing .rune files"
+  - "section: 'all', 'examples', 'tools', or 'features'"
+  - "manually marked sections (<!-- manual -->) are never modified"
+
+EDGE_CASES:
+  - "empty readme_path: raises ValueError"
+  - "readme not found: raises FileNotFoundError"
+  - "empty spec_paths: raises ValueError"
+  - "no .rune files found in paths: returns README with empty tables"
+  - "README with no auto-generated sections: returns unchanged"
+  - "spec with parse errors: skipped with warning comment in README"
+
+TESTS:
+  - |
+    updated = update_readme("README.md", ["examples/basic/"])
+    "calculate_discount" in updated and "validate_email" in updated
+
+  - |
+    updated = update_readme("tools/README.md", ["tools/"], section="tools")
+    "create_rune_spec" in updated
+
+  - |
+    updated = update_readme("README.md", ["examples/"], section="examples")
+    "|" in updated  # contains markdown table
+
+  # Error cases
+  - "update_readme('', ['examples/']) raises ValueError"
+  - "update_readme('nonexistent.md', ['examples/']) raises FileNotFoundError"
+  - "update_readme('README.md', []) raises ValueError"
+
+DEPENDENCIES:
+  - "pyyaml>=6.0"
+
+EXAMPLES:
+  - |
+    # Update main README with current examples
+    updated = update_readme(
+        readme_path="README.md",
+        spec_paths=["examples/", "tools/"],
+        section="all"
+    )
+    with open("README.md", "w") as f:
+        f.write(updated)
+
+COMPLEXITY:
+  time: O(s * n)  # s = number of specs, n = average spec size
+  space: O(r + s)  # r = README size, s = total spec data

@@ -1,0 +1,91 @@
+---
+meta:
+  name: generate_integration_guide
+  language: python
+  version: 1.0
+  tags: [agent-tool, documentation, integration]
+  agent: documentation
+---
+
+RUNE: generate_integration_guide
+
+SIGNATURE: |
+  def generate_integration_guide(
+      integration_type: str,
+      spec_paths: list[str],
+      project_name: str = "my-project"
+  ) -> str
+
+INTENT: |
+  Agent tool that generates a complete integration guide for using RUNE specs
+  with a specific platform. Produces markdown documentation with setup instructions,
+  code examples, and best practices. Used by the Documentation Agent.
+
+BEHAVIOR:
+  - WHEN integration_type is empty THEN raise ValueError("Integration type required")
+  - WHEN integration_type not in ["mcp", "claude-projects", "agents-md", "ci-cd"] THEN raise ValueError("Unsupported integration type")
+  - WHEN spec_paths is empty THEN raise ValueError("At least one spec path required")
+  - WHEN any spec_path does not exist THEN raise FileNotFoundError(f"Spec not found: {path}")
+  - READ and PARSE all referenced specs
+  - GENERATE guide structure:
+    - Overview section explaining the integration
+    - Prerequisites and setup steps
+    - Step-by-step configuration
+    - Code examples using the actual specs provided
+    - Best practices specific to the integration type
+    - Troubleshooting section
+  - WHEN integration_type is "mcp" THEN include server registration and Claude Desktop config
+  - WHEN integration_type is "claude-projects" THEN include project instructions template
+  - WHEN integration_type is "agents-md" THEN include agent definitions and workflow
+  - WHEN integration_type is "ci-cd" THEN include GitHub Actions workflow
+  - RETURN complete markdown guide as string
+
+CONSTRAINTS:
+  - "integration_type: one of 'mcp', 'claude-projects', 'agents-md', 'ci-cd'"
+  - "spec_paths: list of valid file paths to .rune files"
+  - "project_name: used in code examples and configuration"
+  - "output: valid markdown string"
+
+EDGE_CASES:
+  - "empty integration_type: raises ValueError"
+  - "unsupported integration_type: raises ValueError"
+  - "empty spec_paths: raises ValueError"
+  - "spec file not found: raises FileNotFoundError"
+  - "spec with invalid YAML: skips with warning in guide"
+  - "single spec: generates simple guide"
+  - "many specs (>10): generates organized guide with table of contents"
+
+TESTS:
+  - |
+    guide = generate_integration_guide("mcp", ["examples/basic/calculate_discount.rune"])
+    "MCP" in guide and "Claude Desktop" in guide and "```python" in guide
+
+  - |
+    guide = generate_integration_guide("claude-projects", ["examples/basic/validate_email.rune"])
+    "Project Instructions" in guide
+
+  - |
+    guide = generate_integration_guide("agents-md", ["examples/basic/calculate_discount.rune"], "pricing-service")
+    "pricing-service" in guide and "agents.md" in guide
+
+  # Error cases
+  - "generate_integration_guide('', ['spec.rune']) raises ValueError"
+  - "generate_integration_guide('graphql', ['spec.rune']) raises ValueError"
+  - "generate_integration_guide('mcp', []) raises ValueError"
+
+DEPENDENCIES:
+  - "pyyaml>=6.0"
+
+EXAMPLES:
+  - |
+    guide = generate_integration_guide(
+        integration_type="mcp",
+        spec_paths=["tools/search.rune", "tools/create.rune"],
+        project_name="document-server"
+    )
+    with open("docs/mcp-guide.md", "w") as f:
+        f.write(guide)
+
+COMPLEXITY:
+  time: O(s * n)  # s = number of specs, n = average spec size
+  space: O(g)     # g = generated guide size

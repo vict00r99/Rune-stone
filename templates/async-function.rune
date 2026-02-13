@@ -1,0 +1,78 @@
+---
+meta:
+  name: <function_name>
+  language: python          # python | typescript
+  version: 1.0
+  tags: [async, <category>]
+---
+
+RUNE: <function_name>
+
+SIGNATURE: |
+  async def <function_name>(
+      <param_1>: <type>,
+      <param_2>: <type> = <default>,
+      timeout: int = 30
+  ) -> <return_type>
+
+INTENT: |
+  <What this async function does in 1-3 sentences.>
+  <Explain the I/O or concurrency reason it must be async.>
+
+BEHAVIOR:
+  - WHEN <param_1> is invalid THEN raise ValueError("<message>")
+  - WHEN timeout < 1 or timeout > 300 THEN raise ValueError("Timeout out of range")
+  - PERFORM <async operation description>
+  - WHEN operation times out THEN raise TimeoutError("Operation timed out after {timeout}s")
+  - WHEN connection fails THEN raise ConnectionError("<message>")
+  - WHEN operation succeeds THEN return <structured result>
+  - OTHERWISE raise RuntimeError with details
+
+CONSTRAINTS:
+  - "<param_1>: <constraint>"
+  - "timeout: integer between 1 and 300 seconds"
+
+EDGE_CASES:
+  - "<empty input>: <expected behavior>"
+  - "timeout exceeded: raises TimeoutError"
+  - "connection failure: raises ConnectionError"
+  - "concurrent calls: safe for concurrent execution"
+
+TESTS:
+  # Happy path
+  - "await <function_name>(<normal_input>) returns <expected_type>"
+
+  # Timeout handling
+  - "await <function_name>(<input>, timeout=1) raises TimeoutError when slow"
+
+  # Error cases
+  - "await <function_name>(<invalid_input>) raises ValueError"
+
+  # Edge cases
+  - "await <function_name>(<boundary_input>) returns <expected>"
+
+DEPENDENCIES:
+  - "<async library, e.g. httpx>=0.25.0 or aiofiles>=23.0>"
+
+EXAMPLES:
+  - |
+    # Basic async usage
+    result = await <function_name>(<example_input>)
+    print(result)
+  - |
+    # With timeout
+    try:
+        result = await <function_name>(<input>, timeout=5)
+    except TimeoutError:
+        print("Operation timed out")
+  - |
+    # Concurrent execution
+    import asyncio
+    results = await asyncio.gather(
+        <function_name>(<input_a>),
+        <function_name>(<input_b>),
+    )
+
+COMPLEXITY:
+  time: O(<?>)   # note: excludes I/O wait time
+  space: O(<?>)

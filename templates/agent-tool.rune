@@ -1,0 +1,76 @@
+---
+meta:
+  name: <tool_name>
+  language: python
+  version: 1.0
+  tags: [agent-tool, <category>]
+  agent: <agent_name>       # name of the agent that uses this tool
+---
+
+RUNE: <tool_function_name>
+
+SIGNATURE: |
+  def <tool_function_name>(
+      <primary_input>: <type>,
+      <option>: <type> = <default>
+  ) -> <return_type>
+
+INTENT: |
+  Agent tool that <verb phrase describing what it does>.
+  Used by the <Agent Name> to <purpose within the agent workflow>.
+  <Any additional context about how the agent uses this tool.>
+
+BEHAVIOR:
+  - WHEN <primary_input> is empty THEN raise ValueError("<message>")
+  - WHEN <option> is invalid THEN raise ValueError("<message>")
+  - PARSE <primary_input> to extract relevant information
+  - ANALYZE extracted information for <purpose>
+  - GENERATE <output artifact> based on analysis
+  - RETURN structured result with <key fields>
+
+CONSTRAINTS:
+  - "<primary_input>: <constraint description>"
+  - "<option>: <valid values or range>"
+  - "return value: <structure description>"
+
+EDGE_CASES:
+  - "empty input: raises ValueError"
+  - "invalid option value: raises ValueError"
+  - "input with no actionable content: returns minimal/empty result"
+  - "very large input: processes correctly within memory limits"
+
+TESTS:
+  # Happy path
+  - |
+    result = <tool_function_name>(<valid_input>)
+    assert <key_field> in result
+
+  # Different options
+  - |
+    result_a = <tool_function_name>(<input>, <option>=<value_a>)
+    result_b = <tool_function_name>(<input>, <option>=<value_b>)
+    assert result_a != result_b
+
+  # Error cases
+  - "<tool_function_name>('') raises ValueError"
+  - "<tool_function_name>(<input>, <option>=<invalid>) raises ValueError"
+
+DEPENDENCIES:
+  - "<dependency if any>"
+
+EXAMPLES:
+  - |
+    # Direct usage
+    result = <tool_function_name>(<example_input>)
+    print(result)
+  - |
+    # Agent integration
+    class <AgentName>:
+        def process(self, input_data):
+            result = <tool_function_name>(input_data)
+            # Agent uses result for next step
+            return self.format_output(result)
+
+COMPLEXITY:
+  time: O(<?>)
+  space: O(<?>)

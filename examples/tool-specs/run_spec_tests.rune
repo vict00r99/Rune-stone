@@ -1,0 +1,105 @@
+---
+meta:
+  name: run_spec_tests
+  language: python
+  version: 1.0
+  tags: [agent-tool, testing, validation]
+  agent: validator
+---
+
+RUNE: run_spec_tests
+
+SIGNATURE: |
+  def run_spec_tests(
+      spec_path: str,
+      source_path: str,
+      test_framework: str = "pytest",
+      verbose: bool = False
+  ) -> dict[str, Any]
+
+INTENT: |
+  Agent tool that runs the test cases defined in a RUNE spec against an
+  implementation file. Extracts tests from the TESTS section, generates
+  executable test code, and reports results. Used by the Validator Agent.
+
+BEHAVIOR:
+  - WHEN spec_path is empty THEN raise ValueError("Spec path required")
+  - WHEN source_path is empty THEN raise ValueError("Source path required")
+  - WHEN spec file does not exist THEN raise FileNotFoundError(f"Spec not found: {spec_path}")
+  - WHEN source file does not exist THEN raise FileNotFoundError(f"Source not found: {source_path}")
+  - WHEN test_framework not in ["pytest", "unittest"] THEN raise ValueError("Unsupported framework")
+  - READ and PARSE spec file
+  - EXTRACT all entries from TESTS section
+  - FOR each test entry:
+    - PARSE test assertion or description
+    - GENERATE executable test function
+    - EXECUTE test against source implementation
+    - RECORD pass/fail and any error message
+  - CALCULATE summary: total, passed, failed, error count
+  - WHEN verbose is True THEN include stdout/stderr from each test
+  - RETURN dict with: success, total, passed, failed, errors, results (list of per-test details)
+
+CONSTRAINTS:
+  - "spec_path: path to existing .rune file"
+  - "source_path: path to existing source code file"
+  - "test_framework: 'pytest' or 'unittest'"
+  - "results list: each entry has 'test', 'status' (pass/fail/error), 'message'"
+
+EDGE_CASES:
+  - "empty spec_path: raises ValueError"
+  - "empty source_path: raises ValueError"
+  - "spec file not found: raises FileNotFoundError"
+  - "source file not found: raises FileNotFoundError"
+  - "unsupported test_framework: raises ValueError"
+  - "all tests pass: success=True, failed=0"
+  - "some tests fail: success=False with failure details"
+  - "test causes exception: recorded as 'error' status"
+  - "spec with no TESTS: returns success=True, total=0 with warning"
+  - "async tests: handled with asyncio.run wrapper"
+
+TESTS:
+  # Happy path - all tests pass
+  - |
+    result = run_spec_tests("examples/basic/calculate_discount.rune", "calculate_discount.py")
+    result['success'] == True and result['failed'] == 0
+
+  # With failures
+  - |
+    result = run_spec_tests("spec.rune", "buggy_impl.py")
+    result['success'] == False and result['failed'] > 0
+
+  # Verbose mode includes output
+  - |
+    result = run_spec_tests("spec.rune", "impl.py", verbose=True)
+    all('message' in r for r in result['results'])
+
+  # Summary counts are consistent
+  - |
+    result = run_spec_tests("spec.rune", "impl.py")
+    result['total'] == result['passed'] + result['failed'] + result['errors']
+
+  # Error cases
+  - "run_spec_tests('', 'impl.py') raises ValueError"
+  - "run_spec_tests('missing.rune', 'impl.py') raises FileNotFoundError"
+  - "run_spec_tests('spec.rune', 'impl.py', test_framework='jest') raises ValueError"
+
+DEPENDENCIES:
+  - "pyyaml>=6.0"
+  - "pytest>=7.0 (when test_framework='pytest')"
+
+EXAMPLES:
+  - |
+    result = run_spec_tests(
+        spec_path="examples/basic/calculate_discount.rune",
+        source_path="src/calculate_discount.py",
+        verbose=True
+    )
+
+    print(f"Tests: {result['passed']}/{result['total']} passed")
+    for r in result['results']:
+        status = "PASS" if r['status'] == 'pass' else "FAIL"
+        print(f"  [{status}] {r['test']}")
+
+COMPLEXITY:
+  time: O(t * e)  # t = number of tests, e = execution time per test
+  space: O(t)     # storing test results

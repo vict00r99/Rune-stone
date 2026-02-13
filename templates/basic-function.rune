@@ -1,0 +1,52 @@
+---
+meta:
+  name: <function_name>
+  language: python          # python | typescript | go | rust | java | etc.
+  version: 1.0
+  tags: [<category>]
+---
+
+RUNE: <function_name>
+
+SIGNATURE: |
+  def <function_name>(<param>: <type>) -> <return_type>
+
+INTENT: |
+  <What this function does in 1-3 sentences.>
+  <Include context on when/why it would be used.>
+
+BEHAVIOR:
+  - WHEN <invalid input condition> THEN raise <ErrorType>("<message>")
+  - WHEN <condition_a> THEN <action_a>
+  - WHEN <condition_b> THEN <action_b>
+  - OTHERWISE <default_action>
+
+CONSTRAINTS:
+  - "<param>: <constraint description>"
+
+EDGE_CASES:
+  - "<boundary condition>: <expected behavior>"
+  - "<empty input>: <expected behavior>"
+  - "<extreme value>: <expected behavior>"
+
+TESTS:
+  # Happy path
+  - "<function_name>(<normal_input>) == <expected_output>"
+
+  # Boundary conditions
+  - "<function_name>(<boundary_input>) == <expected_output>"
+
+  # Error cases
+  - "<function_name>(<invalid_input>) raises <ErrorType>"
+
+DEPENDENCIES: []
+
+EXAMPLES:
+  - |
+    # Basic usage
+    result = <function_name>(<example_input>)
+    print(result)  # <expected_output>
+
+COMPLEXITY:
+  time: O(<?>)
+  space: O(<?>)

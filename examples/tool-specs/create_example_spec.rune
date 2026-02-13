@@ -1,0 +1,96 @@
+---
+meta:
+  name: create_example_spec
+  language: python
+  version: 1.0
+  tags: [agent-tool, documentation, examples]
+  agent: documentation
+---
+
+RUNE: create_example_spec
+
+SIGNATURE: |
+  def create_example_spec(
+      category: str,
+      concept: str,
+      language: str = "python",
+      complexity_level: str = "basic"
+  ) -> dict[str, str]
+
+INTENT: |
+  Agent tool that creates a complete example RUNE spec with an accompanying README.
+  Designed to demonstrate a specific concept or pattern. Used by the Documentation
+  Agent to populate the examples directory.
+
+BEHAVIOR:
+  - WHEN category is empty THEN raise ValueError("Category required")
+  - WHEN concept is empty THEN raise ValueError("Concept description required")
+  - WHEN language not in supported languages THEN raise ValueError("Unsupported language")
+  - WHEN complexity_level not in ["basic", "intermediate", "advanced"] THEN raise ValueError("Invalid complexity level")
+  - DETERMINE function name and purpose from concept description
+  - GENERATE complete RUNE spec with all required fields:
+    - meta section with name, language, version, tags including category
+    - SIGNATURE in target language syntax
+    - INTENT derived from concept
+    - BEHAVIOR with WHEN/THEN rules
+    - At least 3 TESTS covering happy path, boundary, and error
+  - WHEN complexity_level is "intermediate" or "advanced" THEN include all optional fields
+  - GENERATE README.md explaining:
+    - What the example demonstrates
+    - How to use the spec
+    - Expected output
+  - RETURN dict with "spec" (RUNE YAML) and "readme" (markdown)
+
+CONSTRAINTS:
+  - "category: directory category (e.g., 'basic', 'mcp-tools', 'integrations')"
+  - "concept: description of what the example demonstrates"
+  - "language: target programming language"
+  - "complexity_level: 'basic', 'intermediate', or 'advanced'"
+
+EDGE_CASES:
+  - "empty category: raises ValueError"
+  - "empty concept: raises ValueError"
+  - "unsupported language: raises ValueError"
+  - "invalid complexity_level: raises ValueError"
+  - "basic level: includes only required fields + CONSTRAINTS"
+  - "advanced level: includes all optional fields with detailed content"
+
+TESTS:
+  - |
+    result = create_example_spec("basic", "string reversal function")
+    "RUNE:" in result["spec"] and "TESTS:" in result["spec"] and "# " in result["readme"]
+
+  - |
+    result = create_example_spec("mcp-tools", "document search", "python", "advanced")
+    "EDGE_CASES" in result["spec"] and "COMPLEXITY" in result["spec"]
+
+  - |
+    import yaml
+    result = create_example_spec("basic", "add two numbers")
+    yaml.safe_load(result["spec"]) is not None
+
+  # Error cases
+  - "create_example_spec('', 'test') raises ValueError"
+  - "create_example_spec('basic', '') raises ValueError"
+  - "create_example_spec('basic', 'test', 'cobol') raises ValueError"
+
+DEPENDENCIES:
+  - "pyyaml>=6.0"
+
+EXAMPLES:
+  - |
+    result = create_example_spec(
+        category="basic",
+        concept="Fibonacci sequence generator with memoization",
+        language="python",
+        complexity_level="intermediate"
+    )
+
+    with open("examples/basic/fibonacci.rune", "w") as f:
+        f.write(result["spec"])
+    with open("examples/basic/README.md", "w") as f:
+        f.write(result["readme"])
+
+COMPLEXITY:
+  time: O(1)  # generation is template-based
+  space: O(s)  # s = size of generated spec + readme

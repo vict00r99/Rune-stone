@@ -1,0 +1,139 @@
+---
+meta:
+  name: validate_schema
+  language: python
+  version: 1.0
+  tags: [validation, schema, data-processing]
+---
+
+RUNE: validate_schema
+
+SIGNATURE: |
+  def validate_schema(
+      data: dict[str, Any],
+      schema: dict[str, dict[str, Any]],
+      strict: bool = False
+  ) -> tuple[bool, list[str]]
+
+INTENT: |
+  Validates a data dictionary against a schema definition.
+  Each schema field specifies a type, whether it is required, and optional constraints.
+  Returns a tuple of (is_valid, error_messages) for clear programmatic handling.
+
+BEHAVIOR:
+  - WHEN data is not a dict THEN return (False, ["Data must be a dictionary"])
+  - WHEN schema is empty THEN return (True, [])
+  - FOR each field in schema:
+    - WHEN field has required=True and field is missing from data THEN add error "Missing required field: {field}"
+    - WHEN field is present and type does not match schema type THEN add error "Field {field}: expected {type}, got {actual}"
+    - WHEN field has min_length and value length is less THEN add error "Field {field}: minimum length is {min_length}"
+    - WHEN field has max_length and value length exceeds THEN add error "Field {field}: maximum length is {max_length}"
+    - WHEN field has min_value and value is less THEN add error "Field {field}: minimum value is {min_value}"
+    - WHEN field has max_value and value exceeds THEN add error "Field {field}: maximum value is {max_value}"
+    - WHEN field has pattern and value does not match regex THEN add error "Field {field}: does not match pattern {pattern}"
+  - WHEN strict is True AND data contains keys not in schema THEN add error "Unknown field: {key}" for each extra key
+  - RETURN (len(errors) == 0, errors)
+
+CONSTRAINTS:
+  - "data: must be a dict (or raises on non-dict input)"
+  - "schema: dict mapping field names to constraint dicts"
+  - "schema[field].type: Python type name as string (str, int, float, bool, list, dict)"
+  - "schema[field].required: boolean, default False"
+  - "schema[field].min_length: int, applies to str and list types"
+  - "schema[field].max_length: int, applies to str and list types"
+  - "schema[field].min_value: numeric, applies to int and float types"
+  - "schema[field].max_value: numeric, applies to int and float types"
+  - "schema[field].pattern: regex string, applies to str type"
+  - "strict: when True, rejects fields not in schema"
+
+EDGE_CASES:
+  - "empty data with no required fields: returns (True, [])"
+  - "empty data with required fields: returns (False, [error per missing field])"
+  - "empty schema: returns (True, []) for any data"
+  - "None as data: returns (False, ['Data must be a dictionary'])"
+  - "strict mode with extra fields: returns (False, [error per extra field])"
+  - "field present but None value: treated as type mismatch"
+  - "nested dict validation: only top-level fields checked"
+  - "multiple errors: all collected and returned together"
+
+TESTS:
+  # Happy path
+  - |
+    schema = {"name": {"type": "str", "required": True}, "age": {"type": "int"}}
+    validate_schema({"name": "Alice", "age": 30}, schema) == (True, [])
+  - |
+    schema = {"email": {"type": "str", "required": True, "pattern": ".+@.+"}}
+    validate_schema({"email": "user@example.com"}, schema) == (True, [])
+
+  # Missing required fields
+  - |
+    schema = {"name": {"type": "str", "required": True}}
+    valid, errors = validate_schema({}, schema)
+    valid == False and "Missing required field: name" in errors
+
+  # Type mismatch
+  - |
+    schema = {"age": {"type": "int"}}
+    valid, errors = validate_schema({"age": "thirty"}, schema)
+    valid == False and len(errors) == 1
+
+  # Constraints
+  - |
+    schema = {"name": {"type": "str", "min_length": 2, "max_length": 50}}
+    validate_schema({"name": "A"}, schema)[0] == False
+  - |
+    schema = {"score": {"type": "int", "min_value": 0, "max_value": 100}}
+    validate_schema({"score": 150}, schema)[0] == False
+
+  # Strict mode
+  - |
+    schema = {"name": {"type": "str"}}
+    valid, errors = validate_schema({"name": "Alice", "extra": 1}, schema, strict=True)
+    valid == False and "Unknown field: extra" in errors
+
+  # Edge cases
+  - "validate_schema(None, {}) == (False, ['Data must be a dictionary'])"
+  - "validate_schema({}, {}) == (True, [])"
+  - "validate_schema({'a': 1, 'b': 2}, {}) == (True, [])"
+
+  # Pattern validation
+  - |
+    schema = {"zip": {"type": "str", "pattern": "^\\d{5}$"}}
+    validate_schema({"zip": "12345"}, schema) == (True, [])
+  - |
+    schema = {"zip": {"type": "str", "pattern": "^\\d{5}$"}}
+    validate_schema({"zip": "abcde"}, schema)[0] == False
+
+DEPENDENCIES: []
+
+EXAMPLES:
+  - |
+    # User registration validation
+    user_schema = {
+        "username": {"type": "str", "required": True, "min_length": 3, "max_length": 20},
+        "email": {"type": "str", "required": True, "pattern": ".+@.+\\..+"},
+        "age": {"type": "int", "min_value": 13, "max_value": 120},
+    }
+
+    data = {"username": "alice", "email": "alice@example.com", "age": 25}
+    is_valid, errors = validate_schema(data, user_schema)
+
+    if is_valid:
+        print("Registration data is valid")
+    else:
+        for error in errors:
+            print(f"  - {error}")
+  - |
+    # Strict mode API payload validation
+    api_schema = {
+        "action": {"type": "str", "required": True},
+        "payload": {"type": "dict", "required": True},
+    }
+
+    data = {"action": "create", "payload": {"name": "test"}, "debug": True}
+    is_valid, errors = validate_schema(data, api_schema, strict=True)
+    # is_valid == False, errors == ["Unknown field: debug"]
+
+COMPLEXITY:
+  time: O(f * c)  # f = number of fields, c = avg constraint checks per field
+  space: O(e)  # e = number of error messages collected

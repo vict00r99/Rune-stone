@@ -1,0 +1,108 @@
+---
+meta:
+  name: validate_spec_structure
+  language: python
+  version: 1.0
+  tags: [agent-tool, validation, structure]
+  agent: validator
+---
+
+RUNE: validate_spec_structure
+
+SIGNATURE: |
+  def validate_spec_structure(
+      filepath: str
+  ) -> dict[str, Any]
+
+INTENT: |
+  Agent tool that validates the structural integrity of a RUNE spec file.
+  Checks that the file is valid YAML, has all required fields, and follows naming conventions.
+  Used by the Validator Agent as the first step in the validation pipeline.
+
+BEHAVIOR:
+  - WHEN filepath is empty THEN raise ValueError("Filepath cannot be empty")
+  - WHEN file does not exist THEN raise FileNotFoundError(f"Spec not found: {filepath}")
+  - WHEN file extension is not .rune THEN add warning "File should use .rune extension"
+  - READ file contents
+  - PARSE as YAML
+  - WHEN YAML is invalid THEN return report with valid=False and parse error
+  - CHECK required fields present:
+    - meta (dict with at least name and language)
+    - RUNE (string)
+    - SIGNATURE (string)
+    - INTENT (string)
+    - BEHAVIOR (list)
+    - TESTS (list)
+  - CHECK meta.name is a valid identifier
+  - CHECK meta.language is a recognized language
+  - CHECK RUNE value matches meta.name or is a valid function name
+  - CHECK BEHAVIOR has at least 1 entry
+  - CHECK TESTS has at least 1 entry (warn if fewer than 3)
+  - CHECK optional fields for correct types if present:
+    - CONSTRAINTS: list of strings
+    - EDGE_CASES: list of strings
+    - DEPENDENCIES: list of strings
+    - EXAMPLES: list of strings
+    - COMPLEXITY: dict with time and/or space
+  - RETURN dict with: valid, filepath, errors, warnings, field_summary
+
+CONSTRAINTS:
+  - "filepath: path to a .rune file"
+  - "return dict keys: valid (bool), filepath (str), errors (list), warnings (list), field_summary (dict)"
+  - "field_summary: maps each RUNE field to its presence status and entry count"
+
+EDGE_CASES:
+  - "empty filepath: raises ValueError"
+  - "file not found: raises FileNotFoundError"
+  - "non-.rune extension: validation proceeds with warning"
+  - "empty file: returns valid=False with 'empty file' error"
+  - "valid YAML but not a RUNE spec: returns valid=False with missing field errors"
+  - "all required fields present: returns valid=True"
+  - "optional fields with wrong types: returns valid=True with warnings"
+
+TESTS:
+  # Valid spec file
+  - |
+    result = validate_spec_structure("examples/basic/calculate_discount.rune")
+    result['valid'] == True and len(result['errors']) == 0
+
+  # Another valid spec
+  - |
+    result = validate_spec_structure("examples/basic/validate_email.rune")
+    result['valid'] == True
+
+  # Field summary
+  - |
+    result = validate_spec_structure("examples/basic/is_shop_open.rune")
+    'SIGNATURE' in result['field_summary'] and 'TESTS' in result['field_summary']
+
+  # Error cases
+  - "validate_spec_structure('') raises ValueError"
+  - "validate_spec_structure('nonexistent.rune') raises FileNotFoundError"
+
+DEPENDENCIES:
+  - "pyyaml>=6.0"
+
+EXAMPLES:
+  - |
+    # Validate a single spec
+    report = validate_spec_structure("examples/basic/validate_email.rune")
+    print(f"Valid: {report['valid']}")
+    print(f"Fields: {list(report['field_summary'].keys())}")
+
+    if not report['valid']:
+        for err in report['errors']:
+            print(f"  ERROR: {err}")
+  - |
+    # Validate all specs in a directory
+    from pathlib import Path
+
+    specs = Path("examples/basic").glob("*.rune")
+    for spec_path in specs:
+        report = validate_spec_structure(str(spec_path))
+        status = "PASS" if report['valid'] else "FAIL"
+        print(f"[{status}] {spec_path.name}")
+
+COMPLEXITY:
+  time: O(n)  # n = file size (read + parse + field checks)
+  space: O(n)  # storing parsed YAML and report

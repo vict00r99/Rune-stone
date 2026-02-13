@@ -1,0 +1,116 @@
+---
+meta:
+  name: generate_implementation
+  language: python
+  version: 1.0
+  tags: [agent-tool, code-generation, implementation]
+  agent: code_generator
+---
+
+RUNE: generate_implementation
+
+SIGNATURE: |
+  def generate_implementation(
+      spec_content: str,
+      include_tests: bool = True,
+      test_framework: str = "pytest"
+  ) -> dict[str, str]
+
+INTENT: |
+  Agent tool that generates a complete code implementation from a RUNE specification.
+  Produces source code and optionally a test file, both derived from the spec.
+  Used by the Code Generator Agent to turn approved specs into working code.
+
+BEHAVIOR:
+  - WHEN spec_content is empty THEN raise ValueError("Spec content cannot be empty")
+  - WHEN spec_content is not valid YAML THEN raise ValueError("Invalid RUNE spec")
+  - WHEN required fields missing THEN raise ValueError("Incomplete RUNE spec: missing {fields}")
+  - WHEN test_framework not in ["pytest", "unittest"] THEN raise ValueError("Unsupported test framework")
+  - PARSE spec to extract SIGNATURE, INTENT, BEHAVIOR, CONSTRAINTS, EDGE_CASES, TESTS
+  - GENERATE function with exact SIGNATURE from spec
+  - ADD docstring from INTENT
+  - IMPLEMENT each BEHAVIOR rule as code logic
+  - ADD input validation from CONSTRAINTS
+  - ADD handling for each EDGE_CASE
+  - WHEN include_tests is True THEN generate test file:
+    - One test function per item in TESTS
+    - Import the generated function
+    - Use specified test_framework conventions
+  - RETURN dict with "source" (implementation code) and optionally "tests" (test code)
+
+CONSTRAINTS:
+  - "spec_content: valid RUNE spec as YAML string"
+  - "include_tests: boolean flag"
+  - "test_framework: 'pytest' or 'unittest'"
+  - "return dict keys: 'source' always present, 'tests' present when include_tests=True"
+
+EDGE_CASES:
+  - "empty spec_content: raises ValueError"
+  - "invalid YAML: raises ValueError"
+  - "spec missing SIGNATURE: raises ValueError"
+  - "spec with no TESTS and include_tests=True: generates tests from BEHAVIOR rules"
+  - "spec with async SIGNATURE: generates async implementation and async tests"
+  - "spec for class (not function): generates class with methods"
+  - "spec with DEPENDENCIES: adds import statements"
+
+TESTS:
+  # Happy path
+  - |
+    spec = open("examples/basic/calculate_discount.rune").read()
+    result = generate_implementation(spec)
+    "def calculate_discount" in result['source'] and "test_" in result['tests']
+
+  # Without tests
+  - |
+    spec = open("examples/basic/calculate_discount.rune").read()
+    result = generate_implementation(spec, include_tests=False)
+    'source' in result and 'tests' not in result
+
+  # Unittest framework
+  - |
+    spec = open("examples/basic/validate_email.rune").read()
+    result = generate_implementation(spec, test_framework="unittest")
+    "unittest.TestCase" in result['tests']
+
+  # Error cases
+  - "generate_implementation('') raises ValueError"
+  - "generate_implementation('not yaml at all: [') raises ValueError"
+  - "generate_implementation(spec, test_framework='mocha') raises ValueError"
+
+  # Async spec
+  - |
+    spec = open("examples/integrations/mcp-example/search_documents.rune").read()
+    result = generate_implementation(spec)
+    "async def search_documents" in result['source']
+
+DEPENDENCIES:
+  - "pyyaml>=6.0"
+
+EXAMPLES:
+  - |
+    # Generate implementation from a spec file
+    with open("examples/basic/validate_email.rune") as f:
+        spec = f.read()
+
+    result = generate_implementation(spec)
+
+    # Save implementation
+    with open("validate_email.py", "w") as f:
+        f.write(result['source'])
+
+    # Save tests
+    with open("test_validate_email.py", "w") as f:
+        f.write(result['tests'])
+  - |
+    # Agent integration
+    class CodeGeneratorAgent:
+        def generate_from_spec(self, spec_path: str):
+            with open(spec_path) as f:
+                spec = f.read()
+
+            result = generate_implementation(spec, include_tests=True)
+            return result['source'], result['tests']
+
+COMPLEXITY:
+  time: O(n)  # n = size of spec (parsing + code generation)
+  space: O(n)  # storing generated source and test code

@@ -1,0 +1,112 @@
+---
+meta:
+  name: calculate_discount
+  language: python
+  version: 1.0
+  tags: [business-logic, calculation, pricing]
+---
+
+RUNE: calculate_discount
+
+SIGNATURE: |
+  def calculate_discount(price: float, percentage: int) -> float
+
+INTENT: |
+  Calculates the final price after applying a discount percentage.
+  Used in e-commerce and point-of-sale systems for price calculations.
+  Returns the discounted price rounded to 2 decimal places.
+
+BEHAVIOR:
+  - WHEN percentage < 0 THEN raise ValueError("Discount percentage cannot be negative")
+  - WHEN percentage > 100 THEN raise ValueError("Discount percentage cannot exceed 100")
+  - WHEN price < 0 THEN raise ValueError("Price cannot be negative")
+  - CALCULATE discount_amount = price * (percentage / 100)
+  - CALCULATE final_price = price - discount_amount
+  - ROUND final_price to 2 decimal places
+  - RETURN final_price
+
+CONSTRAINTS:
+  - "price: must be non-negative float"
+  - "percentage: must be integer between 0 and 100 (inclusive)"
+
+EDGE_CASES:
+  - "percentage = 0: returns original price"
+  - "percentage = 100: returns 0.0"
+  - "price = 0: returns 0.0 regardless of percentage"
+  - "very small price (0.01): handles correctly"
+  - "very large price (999999.99): handles correctly"
+  - "negative price: raises ValueError"
+  - "negative percentage: raises ValueError"
+  - "percentage > 100: raises ValueError"
+  - "floating point precision: rounds to 2 decimals"
+
+TESTS:
+  # Happy path - normal discounts
+  - "calculate_discount(100.0, 20) == 80.0"
+  - "calculate_discount(50.0, 10) == 45.0"
+  - "calculate_discount(75.50, 25) == 56.62"
+  
+  # Boundary conditions - percentage
+  - "calculate_discount(100.0, 0) == 100.0"
+  - "calculate_discount(100.0, 100) == 0.0"
+  - "calculate_discount(50.0, 50) == 25.0"
+  
+  # Boundary conditions - price
+  - "calculate_discount(0.0, 20) == 0.0"
+  - "calculate_discount(0.01, 10) == 0.01"
+  - "calculate_discount(999999.99, 10) == 899999.99"
+  
+  # Rounding
+  - "calculate_discount(10.0, 33) == 6.70"
+  - "calculate_discount(99.99, 15) == 84.99"
+  
+  # Error cases - negative values
+  - "calculate_discount(-10.0, 20) raises ValueError"
+  - "calculate_discount(100.0, -5) raises ValueError"
+  
+  # Error cases - percentage out of range
+  - "calculate_discount(100.0, 101) raises ValueError"
+  - "calculate_discount(100.0, 150) raises ValueError"
+
+DEPENDENCIES: []
+
+EXAMPLES:
+  - |
+    # Basic discount calculation
+    original_price = 100.0
+    discount_percent = 20
+    final_price = calculate_discount(original_price, discount_percent)
+    print(f"Original: ${original_price}")
+    print(f"Discount: {discount_percent}%")
+    print(f"Final: ${final_price}")
+    # Output:
+    # Original: $100.0
+    # Discount: 20%
+    # Final: $80.0
+  
+  - |
+    # E-commerce cart total
+    items = [
+        {"price": 29.99, "discount": 10},
+        {"price": 49.99, "discount": 15},
+        {"price": 19.99, "discount": 0}
+    ]
+    
+    total = sum(
+        calculate_discount(item["price"], item["discount"])
+        for item in items
+    )
+    print(f"Cart total: ${total:.2f}")
+    # Output: Cart total: $89.47
+  
+  - |
+    # Error handling
+    try:
+        final = calculate_discount(100.0, 150)
+    except ValueError as e:
+        print(f"Invalid discount: {e}")
+    # Output: Invalid discount: Discount percentage cannot exceed 100
+
+COMPLEXITY:
+  time: O(1)
+  space: O(1)

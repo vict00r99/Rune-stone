@@ -1,0 +1,83 @@
+---
+meta:
+  name: calculate_order_total
+  language: python
+  version: 1.0
+  tags: [e-commerce, pricing, order-processing]
+---
+
+RUNE: calculate_order_total
+
+SIGNATURE: |
+  def calculate_order_total(items: list[dict], tax_rate: float) -> float
+
+INTENT: |
+  Calculates the total cost of a bookstore order including tax.
+  Each item has a price and quantity. The tax rate is applied to the subtotal.
+  Returns the final total rounded to 2 decimal places.
+
+BEHAVIOR:
+  - WHEN items is empty THEN return 0.00
+  - WHEN any item has price <= 0 THEN raise ValueError("Item price must be positive")
+  - WHEN any item has quantity <= 0 THEN raise ValueError("Item quantity must be positive")
+  - WHEN tax_rate < 0 THEN raise ValueError("Tax rate cannot be negative")
+  - WHEN tax_rate > 25 THEN raise ValueError("Tax rate cannot exceed 25%")
+  - CALCULATE subtotal = sum of (item["price"] * item["quantity"]) for each item
+  - CALCULATE tax = subtotal * (tax_rate / 100)
+  - CALCULATE total = subtotal + tax
+  - RETURN round(total, 2)
+
+CONSTRAINTS:
+  - "items: list of dicts, each with 'price' (float > 0) and 'quantity' (int > 0)"
+  - "tax_rate: float between 0 and 25 (percentage)"
+  - "return value: float rounded to 2 decimal places"
+
+EDGE_CASES:
+  - "empty items list: returns 0.00"
+  - "single item with quantity 1: subtotal equals item price"
+  - "tax_rate = 0: total equals subtotal"
+  - "tax_rate = 25: maximum allowed tax"
+  - "very small prices (0.01): no precision loss"
+  - "large order (many items): handles correctly"
+  - "missing 'price' or 'quantity' key: raises KeyError"
+
+TESTS:
+  # Happy path
+  - "calculate_order_total([{'price': 15.99, 'quantity': 2}, {'price': 24.50, 'quantity': 1}], 8.5) == 61.28"
+  - "calculate_order_total([{'price': 10.00, 'quantity': 1}], 10.0) == 11.00"
+  - "calculate_order_total([{'price': 9.99, 'quantity': 3}], 7.0) == 32.07"
+
+  # Empty cart
+  - "calculate_order_total([], 8.5) == 0.00"
+
+  # Zero tax
+  - "calculate_order_total([{'price': 25.00, 'quantity': 2}], 0) == 50.00"
+
+  # Boundary tax rate
+  - "calculate_order_total([{'price': 100.00, 'quantity': 1}], 25) == 125.00"
+
+  # Rounding
+  - "calculate_order_total([{'price': 33.33, 'quantity': 3}], 8.875) == 108.86"
+
+  # Error cases
+  - "calculate_order_total([{'price': -5.00, 'quantity': 1}], 8.5) raises ValueError"
+  - "calculate_order_total([{'price': 10.00, 'quantity': 0}], 8.5) raises ValueError"
+  - "calculate_order_total([{'price': 10.00, 'quantity': 1}], -1) raises ValueError"
+  - "calculate_order_total([{'price': 10.00, 'quantity': 1}], 30) raises ValueError"
+
+DEPENDENCIES: []
+
+EXAMPLES:
+  - |
+    # Simple order: 2 books at $15.99 + 1 book at $24.50, 8.5% tax
+    items = [
+        {"price": 15.99, "quantity": 2},
+        {"price": 24.50, "quantity": 1}
+    ]
+    total = calculate_order_total(items, tax_rate=8.5)
+    print(f"Order total: ${total}")
+    # Output: Order total: $61.28
+
+COMPLEXITY:
+  time: O(n)  # where n is number of items
+  space: O(1)

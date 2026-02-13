@@ -1,0 +1,165 @@
+---
+meta:
+  name: validate_test_coverage
+  language: python
+  version: 1.0
+  tags: [agent-tool, testing, validation, code-quality]
+  agent: test_validator_agent
+---
+
+RUNE: validate_test_coverage
+
+SIGNATURE: |
+  def validate_test_coverage(
+      source_code: str,
+      test_code: str,
+      min_coverage: float = 80.0
+  ) -> dict[str, Any]
+
+INTENT: |
+  Agent tool that validates test coverage and completeness for Python code.
+  Analyzes both source code and tests to ensure adequate testing.
+  Returns detailed report with coverage percentage, missing tests, and recommendations.
+  Used by the Test Validator Agent to ensure code quality.
+
+BEHAVIOR:
+  - WHEN source_code is empty THEN raise ValueError("Source code cannot be empty")
+  - WHEN test_code is empty THEN return report with 0% coverage and recommendations
+  - PARSE source_code to extract functions, classes, methods
+  - PARSE test_code to identify test cases
+  - CALCULATE coverage percentage
+  - IDENTIFY missing test cases (happy path, edge cases, errors)
+  - WHEN coverage < min_coverage THEN flag as insufficient
+  - GENERATE recommendations for missing tests
+  - RETURN structured report with coverage, issues, and recommendations
+
+CONSTRAINTS:
+  - "source_code: non-empty Python code string"
+  - "test_code: Python test code (pytest or unittest format)"
+  - "min_coverage: float between 0.0 and 100.0"
+
+EDGE_CASES:
+  - "empty source_code: raises ValueError"
+  - "empty test_code: returns 0% coverage with recommendations"
+  - "source with no testable code: returns 100% coverage"
+  - "test_code without assertions: flags as incomplete"
+  - "min_coverage = 0.0: always passes"
+  - "min_coverage = 100.0: requires perfect coverage"
+  - "invalid Python syntax in source: raises SyntaxError"
+  - "invalid Python syntax in tests: raises SyntaxError"
+
+TESTS:
+  # Valid code with good coverage
+  - |
+    source = "def add(a, b): return a + b"
+    tests = "def test_add(): assert add(1, 2) == 3"
+    result = validate_test_coverage(source, tests)
+    result['coverage'] > 0
+  
+  # Empty test code
+  - |
+    source = "def add(a, b): return a + b"
+    result = validate_test_coverage(source, "")
+    result['coverage'] == 0.0 and len(result['recommendations']) > 0
+  
+  # High coverage
+  - |
+    source = "def add(a, b): return a + b"
+    tests = '''
+    def test_add_positive(): assert add(1, 2) == 3
+    def test_add_negative(): assert add(-1, -2) == -3
+    def test_add_zero(): assert add(0, 5) == 5
+    '''
+    result = validate_test_coverage(source, tests, min_coverage=80.0)
+    result['sufficient_coverage'] == True
+  
+  # Error cases
+  - "validate_test_coverage('', 'tests') raises ValueError"
+  - "validate_test_coverage('code', 'tests', -10.0) raises ValueError"
+  - "validate_test_coverage('code', 'tests', 150.0) raises ValueError"
+
+DEPENDENCIES:
+  - "ast (Python standard library)"
+  - "coverage>=7.0.0"
+
+EXAMPLES:
+  - |
+    # Basic usage in agent
+    source_code = '''
+    def calculate_total(items, tax_rate=0.0):
+        if not items:
+            raise ValueError("Items cannot be empty")
+        subtotal = sum(item['price'] for item in items)
+        return subtotal * (1 + tax_rate)
+    '''
+    
+    test_code = '''
+    def test_calculate_total():
+        items = [{'price': 10}, {'price': 20}]
+        assert calculate_total(items) == 30.0
+    
+    def test_calculate_total_with_tax():
+        items = [{'price': 100}]
+        assert calculate_total(items, tax_rate=0.1) == 110.0
+    '''
+    
+    report = validate_test_coverage(source_code, test_code, min_coverage=70.0)
+    
+    print(f"Coverage: {report['coverage']:.1f}%")
+    print(f"Sufficient: {report['sufficient_coverage']}")
+    
+    if not report['sufficient_coverage']:
+        print("\nMissing tests:")
+        for missing in report['missing_tests']:
+            print(f"  - {missing}")
+        
+        print("\nRecommendations:")
+        for rec in report['recommendations']:
+            print(f"  - {rec}")
+    
+    # Output example:
+    # Coverage: 75.0%
+    # Sufficient: True
+  
+  - |
+    # Agent integration
+    class TestValidatorAgent:
+        def validate_code(self, source: str, tests: str) -> str:
+            report = validate_test_coverage(source, tests, min_coverage=80.0)
+            
+            if report['sufficient_coverage']:
+                return f"✅ Tests are adequate ({report['coverage']:.1f}% coverage)"
+            
+            feedback = f"⚠️  Test coverage insufficient ({report['coverage']:.1f}%)\n\n"
+            feedback += "Missing test cases:\n"
+            for missing in report['missing_tests']:
+                feedback += f"  • {missing}\n"
+            
+            feedback += "\nRecommendations:\n"
+            for rec in report['recommendations']:
+                feedback += f"  • {rec}\n"
+            
+            return feedback
+  
+  - |
+    # Batch validation
+    files_to_check = [
+        ('module1.py', 'test_module1.py'),
+        ('module2.py', 'test_module2.py'),
+    ]
+    
+    for source_file, test_file in files_to_check:
+        with open(source_file) as f:
+            source = f.read()
+        with open(test_file) as f:
+            tests = f.read()
+        
+        report = validate_test_coverage(source, tests)
+        
+        print(f"\n{source_file}:")
+        print(f"  Coverage: {report['coverage']:.1f}%")
+        print(f"  Status: {'✓' if report['sufficient_coverage'] else '✗'}")
+
+COMPLEXITY:
+  time: O(n + m)  # where n = lines in source, m = lines in tests
+  space: O(n + m)  # storing parsed AST

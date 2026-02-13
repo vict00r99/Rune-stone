@@ -1,0 +1,88 @@
+---
+meta:
+  name: slugify
+  language: any
+  version: 1.0
+  tags: [string-processing, url, text, multi-language]
+---
+
+RUNE: slugify
+
+SIGNATURE: |
+  function slugify(text: string, separator: string = "-") -> string
+
+INTENT: |
+  Converts a text string into a URL-friendly slug.
+  Removes special characters, normalizes whitespace, converts to lowercase,
+  and joins words with the given separator.
+
+BEHAVIOR:
+  - WHEN text is empty THEN return ""
+  - CONVERT text to lowercase
+  - REPLACE accented characters with ASCII equivalents (e.g. é→e, ñ→n, ü→u)
+  - REMOVE all characters that are not alphanumeric, spaces, or hyphens
+  - REPLACE consecutive whitespace/hyphens with a single separator
+  - TRIM leading and trailing separators
+  - RETURN the resulting slug
+
+CONSTRAINTS:
+  - "text: any string"
+  - "separator: single character string, defaults to hyphen"
+  - "output: lowercase, only contains [a-z0-9] and the separator"
+
+EDGE_CASES:
+  - "empty string: returns empty string"
+  - "only special characters (!!!): returns empty string"
+  - "accented characters (café): returns 'cafe'"
+  - "multiple spaces: collapsed to single separator"
+  - "leading/trailing spaces: trimmed"
+  - "already a valid slug: returned unchanged"
+  - "numbers in text: preserved"
+  - "custom separator (underscore): uses underscore instead of hyphen"
+
+TESTS:
+  # Basic slugification
+  - "slugify('Hello World') == 'hello-world'"
+  - "slugify('My Blog Post Title') == 'my-blog-post-title'"
+
+  # Accented characters
+  - "slugify('Café Résumé') == 'cafe-resume'"
+  - "slugify('Ñoño año') == 'nono-ano'"
+  - "slugify('Ünïcödé') == 'unicode'"
+
+  # Special characters
+  - "slugify('Hello, World!') == 'hello-world'"
+  - "slugify('price = $100') == 'price-100'"
+  - "slugify('foo & bar') == 'foo-bar'"
+
+  # Whitespace handling
+  - "slugify('  too   many   spaces  ') == 'too-many-spaces'"
+  - "slugify('already-slugged') == 'already-slugged'"
+
+  # Edge cases
+  - "slugify('') == ''"
+  - "slugify('!!!') == ''"
+  - "slugify('123') == '123'"
+
+  # Custom separator
+  - "slugify('Hello World', '_') == 'hello_world'"
+  - "slugify('My Blog Post', '.') == 'my.blog.post'"
+
+DEPENDENCIES:
+  - "Unicode normalization (NFKD) - standard library in most languages"
+
+EXAMPLES:
+  - |
+    # Generate URL from article title
+    title = "10 Tips for Café Owners"
+    url = "/blog/" + slugify(title)
+    # Result: /blog/10-tips-for-cafe-owners
+
+  - |
+    # Generate file-safe name
+    name = slugify("My Document (Final Version)", "_")
+    # Result: my_document_final_version
+
+COMPLEXITY:
+  time: O(n)  # where n is length of text
+  space: O(n)

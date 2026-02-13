@@ -1,0 +1,99 @@
+---
+meta:
+  name: enhance_rune_spec
+  language: python
+  version: 1.0
+  tags: [agent-tool, spec-enhancement, quality]
+  agent: rune_spec_writer
+---
+
+RUNE: enhance_rune_spec
+
+SIGNATURE: |
+  def enhance_rune_spec(
+      spec_content: str,
+      add_edge_cases: bool = True,
+      add_examples: bool = True,
+      add_complexity: bool = True
+  ) -> str
+
+INTENT: |
+  Agent tool that enhances an existing RUNE specification by adding missing optional
+  fields and improving existing content. Analyzes the spec and suggests edge cases,
+  usage examples, and complexity annotations. Used by the RUNE Spec Writer Agent.
+
+BEHAVIOR:
+  - WHEN spec_content is empty THEN raise ValueError("Spec content cannot be empty")
+  - WHEN spec_content is not valid YAML THEN raise ValueError("Invalid RUNE spec")
+  - WHEN required fields are missing THEN raise ValueError("Incomplete spec: missing {fields}")
+  - PARSE spec to extract all existing fields
+  - WHEN add_edge_cases is True AND EDGE_CASES missing or sparse THEN
+    - ANALYZE BEHAVIOR and CONSTRAINTS for boundary conditions
+    - GENERATE edge cases for: empty input, null, boundary values, type errors, overflow
+    - ADD to EDGE_CASES section
+  - WHEN add_examples is True AND EXAMPLES missing THEN
+    - GENERATE usage example from SIGNATURE and BEHAVIOR
+    - ADD to EXAMPLES section
+  - WHEN add_complexity is True AND COMPLEXITY missing THEN
+    - ANALYZE BEHAVIOR for loops, recursion, data structure usage
+    - ESTIMATE time and space complexity
+    - ADD to COMPLEXITY section
+  - WHEN TESTS has fewer than 3 entries THEN
+    - GENERATE additional tests to cover happy path, boundary, and error cases
+  - FORMAT as valid YAML with --- delimiters
+  - RETURN enhanced RUNE spec as string
+
+CONSTRAINTS:
+  - "spec_content: valid RUNE spec as YAML string with at least required fields"
+  - "add_edge_cases: boolean flag to add/enhance EDGE_CASES section"
+  - "add_examples: boolean flag to add EXAMPLES section"
+  - "add_complexity: boolean flag to add COMPLEXITY section"
+  - "output: valid RUNE spec YAML string with enhancements applied"
+
+EDGE_CASES:
+  - "empty spec_content: raises ValueError"
+  - "invalid YAML: raises ValueError"
+  - "spec already has all optional fields: returns unchanged spec"
+  - "spec with empty EDGE_CASES list: populates with generated cases"
+  - "all flags set to False: returns spec unchanged"
+  - "spec with complex nested BEHAVIOR: generates accurate edge cases"
+
+TESTS:
+  # Happy path
+  - |
+    minimal_spec = open("examples/basic/calculate_discount.rune").read()
+    enhanced = enhance_rune_spec(minimal_spec)
+    "EDGE_CASES" in enhanced and "EXAMPLES" in enhanced and "COMPLEXITY" in enhanced
+
+  # Selective enhancement
+  - |
+    spec = open("examples/basic/calculate_discount.rune").read()
+    enhanced = enhance_rune_spec(spec, add_edge_cases=True, add_examples=False, add_complexity=False)
+    "EDGE_CASES" in enhanced
+
+  # Already complete spec unchanged
+  - |
+    full_spec = open("examples/basic/calculate_discount.rune").read()
+    enhanced = enhance_rune_spec(full_spec)
+    yaml.safe_load(enhanced) is not None
+
+  # Error cases
+  - "enhance_rune_spec('') raises ValueError"
+  - "enhance_rune_spec('not: [valid yaml') raises ValueError"
+
+DEPENDENCIES:
+  - "pyyaml>=6.0"
+
+EXAMPLES:
+  - |
+    # Enhance a minimal spec with all optional sections
+    with open("my_spec.rune") as f:
+        spec = f.read()
+
+    enhanced = enhance_rune_spec(spec)
+    with open("my_spec.rune", "w") as f:
+        f.write(enhanced)
+
+COMPLEXITY:
+  time: O(n)  # n = spec size (parse + analysis + generation)
+  space: O(n)  # storing original and enhanced spec

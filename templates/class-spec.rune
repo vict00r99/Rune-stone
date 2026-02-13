@@ -1,0 +1,79 @@
+---
+meta:
+  name: <class_name>
+  language: python          # python | typescript | java | etc.
+  version: 1.0
+  tags: [class, <category>]
+---
+
+RUNE: <ClassName>
+
+SIGNATURE: |
+  class <ClassName>:
+      def __init__(self, <param>: <type>) -> None
+      def <method_a>(self, <param>: <type>) -> <return_type>
+      def <method_b>(self) -> <return_type>
+
+INTENT: |
+  <What this class represents and its responsibility in 1-3 sentences.>
+  <Explain the core abstraction and when to use it.>
+
+BEHAVIOR:
+  # Constructor
+  - WHEN <param> is invalid THEN raise ValueError("<message>")
+  - STORE <param> as instance attribute
+
+  # method_a
+  - WHEN <precondition not met> THEN raise <ErrorType>
+  - WHEN <condition> THEN <action>
+  - RETURN <result>
+
+  # method_b
+  - COMPUTE <derived value> from instance state
+  - RETURN <derived value>
+
+CONSTRAINTS:
+  - "<param>: <construction constraint>"
+  - "instances are not thread-safe unless noted"
+
+EDGE_CASES:
+  - "constructor with invalid args: raises ValueError"
+  - "method called before initialization: not possible (enforced by __init__)"
+  - "method_a with empty input: <behavior>"
+  - "repeated method calls: idempotent / stateful (specify which)"
+
+TESTS:
+  # Construction
+  - "<ClassName>(<valid_args>) creates instance successfully"
+  - "<ClassName>(<invalid_args>) raises ValueError"
+
+  # method_a
+  - "instance.<method_a>(<input>) == <expected>"
+  - "instance.<method_a>(<edge_input>) == <expected>"
+  - "instance.<method_a>(<invalid>) raises <ErrorType>"
+
+  # method_b
+  - "instance.<method_b>() == <expected>"
+
+  # Integration
+  - "full workflow: construct -> method_a -> method_b produces correct result"
+
+DEPENDENCIES: []
+
+EXAMPLES:
+  - |
+    # Basic usage
+    obj = <ClassName>(<constructor_args>)
+    result = obj.<method_a>(<input>)
+    summary = obj.<method_b>()
+    print(result, summary)
+  - |
+    # Error handling
+    try:
+        obj = <ClassName>(<invalid_args>)
+    except ValueError as e:
+        print(f"Invalid: {e}")
+
+COMPLEXITY:
+  time: O(<?>)   # per method
+  space: O(<?>)  # instance memory

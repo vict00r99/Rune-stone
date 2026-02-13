@@ -1,0 +1,118 @@
+---
+meta:
+  name: search_documents
+  language: python
+  version: 1.0
+  tags: [mcp-tool, search, async, semantic-search]
+  mcp_server: runestone_example
+---
+
+RUNE: search_documents
+
+SIGNATURE: |
+  async def search_documents(
+      query: str,
+      max_results: int = 10,
+      filters: dict[str, Any] | None = None
+  ) -> list[dict[str, Any]]
+
+INTENT: |
+  MCP tool that performs semantic search over a collection of indexed documents.
+  Returns a ranked list of matching documents with relevance scores and metadata.
+  Supports optional filtering by date range, tags, and author.
+
+BEHAVIOR:
+  - WHEN query is empty or whitespace-only THEN raise ValueError("Query cannot be empty")
+  - WHEN len(query) > 500 THEN raise ValueError("Query exceeds 500 character limit")
+  - WHEN max_results < 1 THEN raise ValueError("max_results must be at least 1")
+  - WHEN max_results > 100 THEN raise ValueError("max_results must be at most 100")
+  - WHEN filters is not None THEN validate filter keys are in {date_from, date_to, tags, author}
+  - WHEN filters contains invalid date format THEN raise ValueError("Dates must be ISO 8601 format")
+  - GENERATE embedding vector from query using sentence-transformers
+  - SEARCH vector store for nearest neighbors to query embedding
+  - IF filters provided THEN apply post-retrieval filtering
+  - RANK results by cosine similarity score descending
+  - TRUNCATE content to 200-character preview for each result
+  - RETURN list of dicts with keys: id, title, content_preview, score, metadata
+
+CONSTRAINTS:
+  - "query: non-empty string, maximum 500 characters"
+  - "max_results: integer in range [1, 100]"
+  - "filters.date_from: ISO 8601 date string (YYYY-MM-DD)"
+  - "filters.date_to: ISO 8601 date string (YYYY-MM-DD)"
+  - "filters.tags: list of non-empty strings"
+  - "filters.author: non-empty string"
+
+EDGE_CASES:
+  - "empty query string: raises ValueError"
+  - "whitespace-only query: raises ValueError"
+  - "query at exactly 500 chars: accepted"
+  - "query at 501 chars: raises ValueError"
+  - "max_results = 1: returns single-element list"
+  - "max_results = 100: returns up to 100 results"
+  - "no matching documents: returns empty list"
+  - "filters exclude all matches: returns empty list"
+  - "invalid filter key: raises ValueError"
+  - "date_from after date_to: raises ValueError"
+
+TESTS:
+  # Happy path
+  - "await search_documents('python async programming') returns list of dicts"
+  - "len(await search_documents('test', max_results=3)) <= 3"
+  - "await search_documents('query', filters={'tags': ['tutorial']}) filters correctly"
+
+  # Result structure
+  - "all results have keys: ['id', 'title', 'content_preview', 'score', 'metadata']"
+  - "all result scores are floats in range [0.0, 1.0]"
+  - "all content_preview values are at most 200 characters"
+
+  # Error cases
+  - "await search_documents('') raises ValueError"
+  - "await search_documents('   ') raises ValueError"
+  - "await search_documents('x' * 501) raises ValueError"
+  - "await search_documents('test', max_results=0) raises ValueError"
+  - "await search_documents('test', max_results=101) raises ValueError"
+  - "await search_documents('test', filters={'invalid_key': 'val'}) raises ValueError"
+
+  # Edge cases
+  - "await search_documents('nonexistent_xyz_query_12345') returns []"
+  - "await search_documents('test', filters={'date_from': '2099-01-01'}) returns []"
+
+DEPENDENCIES:
+  - "mcp>=1.0.0"
+  - "chromadb>=0.4.0"
+  - "sentence-transformers>=2.2.0"
+
+EXAMPLES:
+  - |
+    # Basic semantic search
+    results = await search_documents("machine learning best practices")
+    for doc in results:
+        print(f"[{doc['score']:.2f}] {doc['title']}")
+        print(f"  {doc['content_preview']}")
+  - |
+    # Filtered search with limited results
+    results = await search_documents(
+        query="python testing strategies",
+        max_results=5,
+        filters={
+            "tags": ["testing", "python"],
+            "date_from": "2024-01-01"
+        }
+    )
+  - |
+    # MCP server registration
+    from mcp.server import Server
+
+    server = Server("runestone-example")
+
+    @server.tool(
+        name="search_documents",
+        description="Search indexed documents using semantic search"
+    )
+    async def search_tool(query: str, max_results: int = 10, filters: dict | None = None):
+        return await search_documents(query, max_results, filters)
+
+COMPLEXITY:
+  time: O(n log k)  # n = indexed documents, k = max_results (ANN search)
+  space: O(k)  # storing top-k results

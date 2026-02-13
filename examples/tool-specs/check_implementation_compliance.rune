@@ -1,0 +1,107 @@
+---
+meta:
+  name: check_implementation_compliance
+  language: python
+  version: 1.0
+  tags: [agent-tool, validation, compliance]
+  agent: validator
+---
+
+RUNE: check_implementation_compliance
+
+SIGNATURE: |
+  def check_implementation_compliance(
+      spec_path: str,
+      source_path: str,
+      strict: bool = False
+  ) -> dict[str, Any]
+
+INTENT: |
+  Agent tool that checks whether a source code file complies with its RUNE
+  specification. Compares the implementation against the spec contract and
+  reports deviations. Used by the Validator Agent in the review pipeline.
+
+BEHAVIOR:
+  - WHEN spec_path is empty THEN raise ValueError("Spec path required")
+  - WHEN source_path is empty THEN raise ValueError("Source path required")
+  - WHEN spec file does not exist THEN raise FileNotFoundError(f"Spec not found: {spec_path}")
+  - WHEN source file does not exist THEN raise FileNotFoundError(f"Source not found: {source_path}")
+  - READ and PARSE spec file
+  - READ source code file
+  - CHECK function name matches RUNE field
+  - CHECK parameters match SIGNATURE (names, types, defaults)
+  - CHECK return type matches SIGNATURE
+  - CHECK docstring contains INTENT content
+  - CHECK each BEHAVIOR rule is implemented:
+    - WHEN/THEN rules have corresponding conditionals
+    - CALCULATE/PERFORM steps have corresponding operations
+    - RETURN statements match expected outputs
+  - WHEN strict is True THEN additionally check:
+    - All CONSTRAINTS have corresponding input validation
+    - All EDGE_CASES are explicitly handled
+    - Test file exists and covers all TESTS entries
+  - CALCULATE compliance_score as percentage of checks passed
+  - RETURN dict with: compliant, compliance_score, checks_passed, checks_failed, details
+
+CONSTRAINTS:
+  - "spec_path: path to existing .rune file"
+  - "source_path: path to existing source code file"
+  - "strict: enables additional CONSTRAINTS and EDGE_CASES checks"
+  - "compliance_score: float 0.0-100.0"
+
+EDGE_CASES:
+  - "empty spec_path: raises ValueError"
+  - "empty source_path: raises ValueError"
+  - "spec file not found: raises FileNotFoundError"
+  - "source file not found: raises FileNotFoundError"
+  - "perfect compliance: returns compliant=True, score=100.0"
+  - "source has extra functions: ignored (only checks spec-defined items)"
+  - "async spec vs sync source: reports as non-compliant"
+  - "strict mode with missing tests file: reports as non-compliant"
+
+TESTS:
+  # Happy path
+  - |
+    result = check_implementation_compliance(
+        "examples/basic/calculate_discount.rune",
+        "implementations/calculate_discount.py"
+    )
+    isinstance(result, dict) and "compliant" in result and "compliance_score" in result
+
+  # Strict mode adds more checks
+  - |
+    result_normal = check_implementation_compliance("spec.rune", "impl.py", strict=False)
+    result_strict = check_implementation_compliance("spec.rune", "impl.py", strict=True)
+    result_strict['checks_passed'] + result_strict['checks_failed'] >= result_normal['checks_passed'] + result_normal['checks_failed']
+
+  # Non-compliant implementation
+  - |
+    result = check_implementation_compliance("spec.rune", "wrong_impl.py")
+    result['compliant'] == False and len(result['checks_failed']) > 0
+
+  # Error cases
+  - "check_implementation_compliance('', 'impl.py') raises ValueError"
+  - "check_implementation_compliance('spec.rune', '') raises ValueError"
+  - "check_implementation_compliance('missing.rune', 'impl.py') raises FileNotFoundError"
+
+DEPENDENCIES:
+  - "pyyaml>=6.0"
+  - "ast (standard library)"
+
+EXAMPLES:
+  - |
+    report = check_implementation_compliance(
+        spec_path="examples/basic/calculate_discount.rune",
+        source_path="src/calculate_discount.py",
+        strict=True
+    )
+
+    print(f"Compliant: {report['compliant']}")
+    print(f"Score: {report['compliance_score']:.1f}%")
+
+    for check in report['checks_failed']:
+        print(f"  FAIL: {check}")
+
+COMPLEXITY:
+  time: O(s + c)  # s = spec size, c = source code size
+  space: O(s + c)  # storing parsed spec and AST

@@ -1,0 +1,209 @@
+---
+meta:
+  name: generate_docstring
+  language: python
+  version: 1.0
+  tags: [agent-tool, documentation, code-analysis]
+  agent: documentation_agent
+---
+
+RUNE: generate_docstring
+
+SIGNATURE: |
+  def generate_docstring(
+      function_code: str,
+      style: str = "google",
+      include_examples: bool = True
+  ) -> str
+
+INTENT: |
+  Agent tool that generates comprehensive docstrings for Python functions.
+  Analyzes function signature, parameters, and body to create documentation.
+  Supports multiple docstring styles (Google, NumPy, Sphinx).
+  Used by the Documentation Agent to maintain code documentation.
+
+BEHAVIOR:
+  - WHEN function_code is empty THEN raise ValueError("Function code cannot be empty")
+  - WHEN style not in ["google", "numpy", "sphinx"] THEN raise ValueError
+  - PARSE function code to extract:
+    - Function name
+    - Parameters with types
+    - Return type
+    - Docstring (if exists)
+    - Function body logic
+  - ANALYZE function body to understand behavior
+  - GENERATE docstring in specified style including:
+    - Brief description
+    - Detailed description
+    - Parameters documentation
+    - Returns documentation
+    - Raises documentation (if applicable)
+    - Examples (if include_examples is True)
+  - RETURN formatted docstring
+
+CONSTRAINTS:
+  - "function_code: valid Python function definition"
+  - "style: one of ['google', 'numpy', 'sphinx']"
+  - "include_examples: boolean flag"
+
+EDGE_CASES:
+  - "empty function_code: raises ValueError"
+  - "function with no parameters: documents accordingly"
+  - "function with no return type: notes as None or unspecified"
+  - "function already has docstring: replaces or enhances it"
+  - "function with complex types: handles properly"
+  - "async function: documents as async"
+  - "generator function: documents as generator"
+  - "invalid Python syntax: raises SyntaxError"
+  - "unsupported style: raises ValueError"
+
+TESTS:
+  # Valid function
+  - |
+    code = "def add(a: int, b: int) -> int:\n    return a + b"
+    result = generate_docstring(code, style="google")
+    "Args:" in result and "Returns:" in result
+  
+  # Different styles
+  - |
+    code = "def multiply(x: float, y: float) -> float:\n    return x * y"
+    google = generate_docstring(code, style="google")
+    numpy = generate_docstring(code, style="numpy")
+    sphinx = generate_docstring(code, style="sphinx")
+    google != numpy != sphinx
+  
+  # With/without examples
+  - |
+    code = "def greet(name: str) -> str:\n    return f'Hello, {name}!'"
+    with_examples = generate_docstring(code, include_examples=True)
+    without_examples = generate_docstring(code, include_examples=False)
+    len(with_examples) > len(without_examples)
+  
+  # Error cases
+  - "generate_docstring('') raises ValueError"
+  - "generate_docstring('def f():', style='invalid') raises ValueError"
+  - "generate_docstring('not valid python') raises SyntaxError"
+
+DEPENDENCIES:
+  - "ast (Python standard library)"
+  - "inspect (Python standard library)"
+
+EXAMPLES:
+  - |
+    # Generate Google-style docstring
+    function_code = '''
+    def calculate_discount(price: float, percentage: int) -> float:
+        if percentage < 0 or percentage > 100:
+            raise ValueError("Invalid percentage")
+        return price * (1 - percentage / 100)
+    '''
+    
+    docstring = generate_docstring(function_code, style="google")
+    print(docstring)
+    
+    # Output:
+    # """Calculate discounted price.
+    # 
+    # Applies a percentage discount to a given price and returns the final amount.
+    # 
+    # Args:
+    #     price (float): Original price before discount.
+    #     percentage (int): Discount percentage (0-100).
+    # 
+    # Returns:
+    #     float: Final price after applying discount.
+    # 
+    # Raises:
+    #     ValueError: If percentage is not between 0 and 100.
+    # 
+    # Examples:
+    #     >>> calculate_discount(100.0, 20)
+    #     80.0
+    #     >>> calculate_discount(50.0, 10)
+    #     45.0
+    # """
+  
+  - |
+    # Generate NumPy-style docstring
+    function_code = '''
+    def validate_email(email: str) -> tuple[bool, str]:
+        if '@' not in email:
+            return (False, "Missing @ symbol")
+        return (True, "Valid email")
+    '''
+    
+    docstring = generate_docstring(function_code, style="numpy")
+    print(docstring)
+    
+    # Output:
+    # """Validate email address format.
+    # 
+    # Checks if the provided email contains required components.
+    # 
+    # Parameters
+    # ----------
+    # email : str
+    #     Email address to validate
+    # 
+    # Returns
+    # -------
+    # tuple[bool, str]
+    #     First element is validation status (True/False)
+    #     Second element is status message
+    # 
+    # Examples
+    # --------
+    # >>> validate_email("user@example.com")
+    # (True, "Valid email")
+    # >>> validate_email("invalid")
+    # (False, "Missing @ symbol")
+    # """
+  
+  - |
+    # Agent integration
+    class DocumentationAgent:
+        def document_function(self, code: str) -> str:
+            try:
+                docstring = generate_docstring(
+                    code,
+                    style="google",
+                    include_examples=True
+                )
+                
+                # Insert docstring into function
+                lines = code.split('\n')
+                func_def_line = next(i for i, line in enumerate(lines) 
+                                   if line.strip().startswith('def '))
+                
+                # Add docstring after function definition
+                indented_docstring = '\n'.join(
+                    '    ' + line for line in docstring.split('\n')
+                )
+                lines.insert(func_def_line + 1, indented_docstring)
+                
+                return '\n'.join(lines)
+            
+            except Exception as e:
+                return f"Error generating documentation: {e}"
+  
+  - |
+    # Batch documentation
+    import ast
+    
+    source_file = "module.py"
+    with open(source_file) as f:
+        tree = ast.parse(f.read())
+    
+    # Find all function definitions
+    functions = [node for node in ast.walk(tree) 
+                if isinstance(node, ast.FunctionDef)]
+    
+    for func in functions:
+        code = ast.get_source_segment(source_file, func)
+        docstring = generate_docstring(code, style="google")
+        print(f"\n{func.name}:")
+        print(docstring)
+
+COMPLEXITY:
+  time: O(n)  # where n is length of function code (parsing AST)
+  space: O(n)  # storing parsed AST and generated docstring

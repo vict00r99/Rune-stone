@@ -1,0 +1,152 @@
+---
+meta:
+  name: validate_rune_spec
+  language: python
+  version: 1.0
+  tags: [agent-tool, validation, yaml]
+  agent: rune_spec_writer
+---
+
+RUNE: validate_rune_spec
+
+SIGNATURE: |
+  def validate_rune_spec(
+      spec_content: str,
+      strict: bool = False
+  ) -> dict[str, Any]
+
+INTENT: |
+  Agent tool that validates a RUNE specification against the SPEC.md standard.
+  Checks for structural correctness, required fields, content quality, and best practices.
+  Returns a detailed validation report with issues and suggestions.
+
+BEHAVIOR:
+  - WHEN spec_content is empty THEN raise ValueError("Spec content cannot be empty")
+  - PARSE spec_content as YAML
+  - WHEN YAML is invalid THEN return report with parse error
+  - CHECK required fields present: meta (with name, language), RUNE, SIGNATURE, INTENT, BEHAVIOR, TESTS
+  - CHECK meta.name matches RUNE field value
+  - CHECK SIGNATURE uses target language syntax (not pseudocode)
+  - CHECK INTENT is 1-3 sentences
+  - CHECK BEHAVIOR uses WHEN/THEN format
+  - CHECK TESTS has at least 3 test cases
+  - WHEN strict is True THEN also check:
+    - EDGE_CASES section exists with at least 2 entries
+    - CONSTRAINTS section exists
+    - EXAMPLES section exists with at least 1 example
+    - COMPLEXITY section exists
+  - COLLECT all issues with severity (error, warning, info)
+  - GENERATE suggestions for each issue
+  - CALCULATE overall validity (valid if no errors)
+  - RETURN dict with keys: valid, errors, warnings, suggestions, summary
+
+CONSTRAINTS:
+  - "spec_content: non-empty string containing YAML"
+  - "strict: boolean, enables additional quality checks"
+  - "return value: dict with valid (bool), errors (list), warnings (list), suggestions (list), summary (str)"
+
+EDGE_CASES:
+  - "empty spec_content: raises ValueError"
+  - "invalid YAML: returns valid=False with parse error"
+  - "missing one required field: returns valid=False with specific error"
+  - "all required fields present but poor quality: returns valid=True with warnings"
+  - "perfect spec: returns valid=True with no issues"
+  - "strict mode on minimal spec: returns valid=False (missing optional sections)"
+  - "non-string input: raises TypeError"
+
+TESTS:
+  # Valid spec
+  - |
+    valid_spec = """
+    ---
+    meta:
+      name: add
+      language: python
+    ---
+    RUNE: add
+    SIGNATURE: "def add(a: int, b: int) -> int"
+    INTENT: "Adds two integers."
+    BEHAVIOR:
+      - WHEN inputs valid THEN return sum
+    TESTS:
+      - "add(1, 2) == 3"
+      - "add(0, 0) == 0"
+      - "add(-1, 1) == 0"
+    """
+    result = validate_rune_spec(valid_spec)
+    result['valid'] == True
+
+  # Missing required field
+  - |
+    no_tests = """
+    ---
+    meta:
+      name: add
+      language: python
+    ---
+    RUNE: add
+    SIGNATURE: "def add(a: int, b: int) -> int"
+    INTENT: "Adds two integers."
+    BEHAVIOR:
+      - WHEN inputs valid THEN return sum
+    """
+    result = validate_rune_spec(no_tests)
+    result['valid'] == False and any("TESTS" in e for e in result['errors'])
+
+  # Invalid YAML
+  - |
+    result = validate_rune_spec("{ invalid yaml: [")
+    result['valid'] == False
+
+  # Error cases
+  - "validate_rune_spec('') raises ValueError"
+
+  # Strict mode
+  - |
+    minimal_spec = """
+    ---
+    meta:
+      name: add
+      language: python
+    ---
+    RUNE: add
+    SIGNATURE: "def add(a: int, b: int) -> int"
+    INTENT: "Adds two integers."
+    BEHAVIOR:
+      - WHEN inputs valid THEN return sum
+    TESTS:
+      - "add(1, 2) == 3"
+      - "add(0, 0) == 0"
+      - "add(-1, 1) == 0"
+    """
+    result = validate_rune_spec(minimal_spec, strict=True)
+    len(result['warnings']) > 0  # missing optional sections flagged
+
+DEPENDENCIES:
+  - "pyyaml>=6.0"
+
+EXAMPLES:
+  - |
+    # Validate a spec file
+    with open("examples/basic/validate_email.rune") as f:
+        content = f.read()
+
+    report = validate_rune_spec(content)
+
+    if report['valid']:
+        print(f"Valid spec: {report['summary']}")
+    else:
+        print("Invalid spec:")
+        for error in report['errors']:
+            print(f"  ERROR: {error}")
+        for suggestion in report['suggestions']:
+            print(f"  FIX: {suggestion}")
+  - |
+    # Strict validation for production specs
+    report = validate_rune_spec(content, strict=True)
+    for warning in report['warnings']:
+        print(f"  WARNING: {warning}")
+
+COMPLEXITY:
+  time: O(n)  # n = size of spec content (parsing + field checks)
+  space: O(n)  # storing parsed YAML and validation report

@@ -1,0 +1,90 @@
+---
+meta:
+  name: validate_coupon
+  language: python
+  version: 1.0
+  tags: [e-commerce, validation, coupons]
+---
+
+RUNE: validate_coupon
+
+SIGNATURE: |
+  def validate_coupon(code: str, active_coupons: list[dict], current_date: str) -> tuple[bool, dict | str]
+
+INTENT: |
+  Validates a coupon code against a list of active coupons.
+  Checks existence, expiration, and format.
+  Returns (True, coupon_data) if valid or (False, error_message) if not.
+
+BEHAVIOR:
+  - WHEN code is empty or None THEN return (False, "Coupon code cannot be empty")
+  - WHEN code (case-insensitive) not found in active_coupons THEN return (False, "Coupon code not found")
+  - WHEN matching coupon has expires_at < current_date THEN return (False, "Coupon has expired")
+  - WHEN matching coupon has invalid discount_type (not "percentage" or "fixed") THEN return (False, "Invalid coupon configuration")
+  - WHEN matching coupon has percentage discount_value > 100 or <= 0 THEN return (False, "Invalid discount value")
+  - WHEN matching coupon has fixed discount_value <= 0 THEN return (False, "Invalid discount value")
+  - OTHERWISE return (True, matching_coupon)
+
+CONSTRAINTS:
+  - "code: non-empty string, compared case-insensitively"
+  - "active_coupons: list of dicts with keys 'code', 'discount_type', 'discount_value', 'expires_at'"
+  - "current_date: ISO 8601 date string (YYYY-MM-DD)"
+  - "discount_type: 'percentage' or 'fixed'"
+  - "discount_value: positive number; if percentage, must be <= 100"
+
+EDGE_CASES:
+  - "empty code: returns error"
+  - "None code: returns error"
+  - "case mismatch (SAVE10 vs save10): should match"
+  - "expired yesterday: rejected"
+  - "expires today: still valid"
+  - "empty active_coupons list: not found"
+  - "multiple coupons with same code: returns first match"
+
+TESTS:
+  # Valid coupon - percentage
+  - "validate_coupon('SAVE10', [{'code': 'SAVE10', 'discount_type': 'percentage', 'discount_value': 10, 'expires_at': '2099-12-31'}], '2025-01-15')[0] == True"
+
+  # Valid coupon - fixed
+  - "validate_coupon('FLAT5', [{'code': 'FLAT5', 'discount_type': 'fixed', 'discount_value': 5.00, 'expires_at': '2099-12-31'}], '2025-01-15')[0] == True"
+
+  # Case insensitive
+  - "validate_coupon('save10', [{'code': 'SAVE10', 'discount_type': 'percentage', 'discount_value': 10, 'expires_at': '2099-12-31'}], '2025-01-15')[0] == True"
+
+  # Not found
+  - "validate_coupon('INVALID', [{'code': 'SAVE10', 'discount_type': 'percentage', 'discount_value': 10, 'expires_at': '2099-12-31'}], '2025-01-15')[0] == False"
+
+  # Expired
+  - "validate_coupon('OLD', [{'code': 'OLD', 'discount_type': 'percentage', 'discount_value': 10, 'expires_at': '2020-01-01'}], '2025-01-15')[0] == False"
+
+  # Expires today - still valid
+  - "validate_coupon('TODAY', [{'code': 'TODAY', 'discount_type': 'percentage', 'discount_value': 10, 'expires_at': '2025-01-15'}], '2025-01-15')[0] == True"
+
+  # Empty code
+  - "validate_coupon('', [], '2025-01-15')[0] == False"
+
+  # Empty coupons list
+  - "validate_coupon('SAVE10', [], '2025-01-15')[0] == False"
+
+  # Invalid discount value
+  - "validate_coupon('BAD', [{'code': 'BAD', 'discount_type': 'percentage', 'discount_value': 150, 'expires_at': '2099-12-31'}], '2025-01-15')[0] == False"
+
+DEPENDENCIES: []
+
+EXAMPLES:
+  - |
+    # Validate a coupon at checkout
+    coupons = [
+        {"code": "SAVE10", "discount_type": "percentage", "discount_value": 10, "expires_at": "2099-12-31"},
+        {"code": "FLAT5", "discount_type": "fixed", "discount_value": 5.00, "expires_at": "2099-12-31"}
+    ]
+    is_valid, result = validate_coupon("SAVE10", coupons, "2025-06-15")
+    if is_valid:
+        print(f"Coupon applied: {result['discount_value']}% off")
+    else:
+        print(f"Error: {result}")
+    # Output: Coupon applied: 10% off
+
+COMPLEXITY:
+  time: O(n)  # where n is number of active coupons
+  space: O(1)

@@ -1,0 +1,103 @@
+---
+meta:
+  name: read_file
+  language: python
+  version: 1.0
+  tags: [mcp-tool, file-io, async, crud]
+  mcp_server: runestone_example
+---
+
+RUNE: read_file
+
+SIGNATURE: |
+  async def read_file(
+      filepath: str,
+      encoding: str = "utf-8",
+      max_bytes: int | None = None
+  ) -> dict[str, Any]
+
+INTENT: |
+  MCP tool that safely reads file contents with size limits and encoding support.
+  Returns file content along with metadata such as size, modification time, and encoding.
+  Designed for AI assistants that need controlled file system access.
+
+BEHAVIOR:
+  - WHEN filepath is empty THEN raise ValueError("Filepath cannot be empty")
+  - WHEN filepath contains path traversal (../) THEN raise ValueError("Path traversal not allowed")
+  - WHEN file does not exist THEN raise FileNotFoundError(f"File not found: {filepath}")
+  - WHEN file is not readable THEN raise PermissionError(f"Cannot read file: {filepath}")
+  - WHEN file size exceeds max_bytes THEN read only first max_bytes bytes
+  - WHEN encoding is invalid THEN raise ValueError(f"Unsupported encoding: {encoding}")
+  - READ file contents using specified encoding
+  - COLLECT file metadata (size, modified time, mime type)
+  - RETURN dict with keys: content, filepath, size_bytes, modified, encoding, truncated
+
+CONSTRAINTS:
+  - "filepath: non-empty string, no path traversal sequences"
+  - "encoding: valid Python codec name (utf-8, ascii, latin-1, etc.)"
+  - "max_bytes: positive integer or None for unlimited (default None)"
+  - "file must be within allowed directory sandbox"
+
+EDGE_CASES:
+  - "empty filepath: raises ValueError"
+  - "path traversal attempt: raises ValueError"
+  - "nonexistent file: raises FileNotFoundError"
+  - "permission denied: raises PermissionError"
+  - "binary file with text encoding: raises UnicodeDecodeError"
+  - "empty file: returns content as empty string with size_bytes=0"
+  - "file exceeds max_bytes: returns truncated content with truncated=True"
+  - "file within max_bytes: returns full content with truncated=False"
+  - "symlink: resolves and validates target is within sandbox"
+
+TESTS:
+  # Happy path
+  - "result = await read_file('test.txt'); result['content'] == 'hello world'"
+  - "result = await read_file('test.txt'); 'size_bytes' in result and 'modified' in result"
+  - "result = await read_file('test.txt', encoding='ascii'); result['encoding'] == 'ascii'"
+
+  # Truncation
+  - "result = await read_file('large.txt', max_bytes=10); result['truncated'] == True"
+  - "result = await read_file('small.txt', max_bytes=10000); result['truncated'] == False"
+
+  # Error cases
+  - "await read_file('') raises ValueError"
+  - "await read_file('../etc/passwd') raises ValueError"
+  - "await read_file('nonexistent.txt') raises FileNotFoundError"
+  - "await read_file('test.txt', encoding='invalid-codec') raises ValueError"
+
+  # Edge cases
+  - "result = await read_file('empty.txt'); result['content'] == '' and result['size_bytes'] == 0"
+
+DEPENDENCIES:
+  - "mcp>=1.0.0"
+  - "aiofiles>=23.0.0"
+
+EXAMPLES:
+  - |
+    # Read a text file
+    result = await read_file("docs/readme.md")
+    print(f"File: {result['filepath']}")
+    print(f"Size: {result['size_bytes']} bytes")
+    print(f"Content:\n{result['content']}")
+  - |
+    # Read with size limit
+    result = await read_file("large_log.txt", max_bytes=4096)
+    if result['truncated']:
+        print(f"Showing first 4096 bytes of {result['size_bytes']} total")
+    print(result['content'])
+  - |
+    # MCP server registration
+    from mcp.server import Server
+
+    server = Server("runestone-example")
+
+    @server.tool(
+        name="read_file",
+        description="Read file contents with metadata"
+    )
+    async def read_tool(filepath: str, encoding: str = "utf-8", max_bytes: int | None = None):
+        return await read_file(filepath, encoding, max_bytes)
+
+COMPLEXITY:
+  time: O(n)  # n = file size in bytes (or max_bytes if truncated)
+  space: O(n)  # storing file content in memory

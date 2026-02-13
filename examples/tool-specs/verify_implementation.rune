@@ -1,0 +1,118 @@
+---
+meta:
+  name: verify_implementation
+  language: python
+  version: 1.0
+  tags: [agent-tool, verification, code-quality]
+  agent: code_generator
+---
+
+RUNE: verify_implementation
+
+SIGNATURE: |
+  def verify_implementation(
+      spec_content: str,
+      source_code: str
+  ) -> dict[str, Any]
+
+INTENT: |
+  Agent tool that verifies a code implementation matches its RUNE specification.
+  Checks signature conformance, behavior coverage, constraint handling, and
+  test alignment. Used by the Code Generator Agent after generating code.
+
+BEHAVIOR:
+  - WHEN spec_content is empty THEN raise ValueError("Spec content cannot be empty")
+  - WHEN source_code is empty THEN raise ValueError("Source code cannot be empty")
+  - WHEN spec_content is not valid YAML THEN raise ValueError("Invalid RUNE spec")
+  - PARSE spec to extract SIGNATURE, BEHAVIOR, CONSTRAINTS, TESTS
+  - ANALYZE source_code:
+    - EXTRACT function/class definition
+    - EXTRACT parameter names and types
+    - EXTRACT return type
+    - IDENTIFY error handling patterns
+    - IDENTIFY branch conditions
+  - CHECK signature conformance:
+    - Function name matches RUNE field
+    - Parameter names match SIGNATURE
+    - Parameter types match SIGNATURE
+    - Return type matches SIGNATURE
+  - CHECK behavior coverage:
+    - Each WHEN/THEN rule has corresponding code branch
+    - OTHERWISE clause has default branch
+  - CHECK constraint handling:
+    - Input validation present for each CONSTRAINT
+  - GENERATE compliance report with:
+    - Overall compliance score (0-100)
+    - Signature match details
+    - Behavior coverage percentage
+    - Missing constraint checks
+    - Suggestions for improvement
+  - RETURN dict with: compliant (bool), score (int), details (dict), suggestions (list)
+
+CONSTRAINTS:
+  - "spec_content: valid RUNE spec as YAML string"
+  - "source_code: valid source code in the spec's target language"
+  - "return keys: compliant, score, details, suggestions"
+  - "score: integer 0-100 representing compliance percentage"
+
+EDGE_CASES:
+  - "empty spec_content: raises ValueError"
+  - "empty source_code: raises ValueError"
+  - "invalid YAML spec: raises ValueError"
+  - "source code with syntax errors: reports as non-compliant with parse error"
+  - "perfect match: returns compliant=True, score=100"
+  - "partial match: returns compliant=False with specific gaps"
+  - "async spec vs sync implementation: flags mismatch"
+
+TESTS:
+  # Happy path - matching implementation
+  - |
+    spec = open("examples/basic/calculate_discount.rune").read()
+    code = '''
+    def calculate_discount(price: float, percentage: int) -> float:
+        if percentage < 0: raise ValueError("negative")
+        if percentage > 100: raise ValueError("over 100")
+        if price < 0: raise ValueError("negative price")
+        return round(price * (1 - percentage / 100), 2)
+    '''
+    result = verify_implementation(spec, code)
+    result['compliant'] == True and result['score'] >= 80
+
+  # Mismatched signature
+  - |
+    spec = open("examples/basic/calculate_discount.rune").read()
+    code = "def calc_discount(p, pct): return p * (1 - pct/100)"
+    result = verify_implementation(spec, code)
+    result['compliant'] == False and "signature" in str(result['details']).lower()
+
+  # Missing error handling
+  - |
+    spec = open("examples/basic/calculate_discount.rune").read()
+    code = "def calculate_discount(price: float, percentage: int) -> float:\n    return round(price * (1 - percentage / 100), 2)"
+    result = verify_implementation(spec, code)
+    result['score'] < 100 and len(result['suggestions']) > 0
+
+  # Error cases
+  - "verify_implementation('', 'code') raises ValueError"
+  - "verify_implementation('spec', '') raises ValueError"
+
+DEPENDENCIES:
+  - "pyyaml>=6.0"
+  - "ast (standard library)"
+
+EXAMPLES:
+  - |
+    with open("examples/basic/calculate_discount.rune") as f:
+        spec = f.read()
+    with open("calculate_discount.py") as f:
+        code = f.read()
+
+    report = verify_implementation(spec, code)
+    print(f"Compliant: {report['compliant']}")
+    print(f"Score: {report['score']}/100")
+    for suggestion in report['suggestions']:
+        print(f"  - {suggestion}")
+
+COMPLEXITY:
+  time: O(s + c)  # s = spec size, c = code size (parsing both)
+  space: O(s + c)  # storing parsed representations

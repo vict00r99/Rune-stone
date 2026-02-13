@@ -1,0 +1,114 @@
+---
+meta:
+  name: fetch_json
+  language: python
+  version: 1.0
+  tags: [http, api, async, networking]
+---
+
+RUNE: fetch_json
+
+SIGNATURE: |
+  async def fetch_json(
+      url: str,
+      method: str = "GET",
+      headers: dict[str, str] | None = None,
+      body: dict[str, Any] | None = None,
+      timeout: int = 30
+  ) -> dict[str, Any]
+
+INTENT: |
+  Performs an HTTP request and returns the parsed JSON response.
+  Handles common HTTP errors with descriptive exceptions and supports
+  configurable timeouts for robust API integration.
+
+BEHAVIOR:
+  - WHEN url is empty THEN raise ValueError("URL cannot be empty")
+  - WHEN url does not start with http:// or https:// THEN raise ValueError("URL must use HTTP or HTTPS scheme")
+  - WHEN method not in ["GET", "POST", "PUT", "PATCH", "DELETE"] THEN raise ValueError("Unsupported HTTP method")
+  - WHEN timeout < 1 or timeout > 300 THEN raise ValueError("Timeout must be between 1 and 300 seconds")
+  - WHEN method is GET and body is not None THEN raise ValueError("GET requests cannot have a body")
+  - CONSTRUCT request with url, method, headers, and optional JSON body
+  - SEND request with specified timeout
+  - WHEN connection fails THEN raise ConnectionError with details
+  - WHEN timeout exceeded THEN raise TimeoutError("Request timed out after {timeout}s")
+  - WHEN status code is 4xx THEN raise HTTPClientError with status code and response body
+  - WHEN status code is 5xx THEN raise HTTPServerError with status code and response body
+  - WHEN response is not valid JSON THEN raise ValueError("Response is not valid JSON")
+  - RETURN parsed JSON response as dict
+
+CONSTRAINTS:
+  - "url: non-empty string starting with http:// or https://"
+  - "method: one of GET, POST, PUT, PATCH, DELETE (uppercase)"
+  - "headers: optional dict of string key-value pairs"
+  - "body: optional dict, only for POST/PUT/PATCH"
+  - "timeout: integer between 1 and 300 seconds"
+
+EDGE_CASES:
+  - "empty url: raises ValueError"
+  - "ftp:// url: raises ValueError (unsupported scheme)"
+  - "GET with body: raises ValueError"
+  - "timeout = 0: raises ValueError"
+  - "timeout = 301: raises ValueError"
+  - "404 response: raises HTTPClientError"
+  - "500 response: raises HTTPServerError"
+  - "non-JSON response: raises ValueError"
+  - "network unreachable: raises ConnectionError"
+  - "DNS resolution failure: raises ConnectionError"
+  - "empty JSON response {}: returns empty dict"
+  - "redirect (3xx): follows redirect automatically"
+
+TESTS:
+  # Happy path
+  - "await fetch_json('https://api.example.com/users') returns dict"
+  - "await fetch_json('https://api.example.com/users', method='POST', body={'name': 'Alice'}) returns dict"
+  - "await fetch_json('https://api.example.com/data', headers={'Authorization': 'Bearer token'}) returns dict"
+
+  # Input validation
+  - "await fetch_json('') raises ValueError"
+  - "await fetch_json('ftp://example.com') raises ValueError"
+  - "await fetch_json('https://example.com', method='TRACE') raises ValueError"
+  - "await fetch_json('https://example.com', method='GET', body={'key': 'val'}) raises ValueError"
+  - "await fetch_json('https://example.com', timeout=0) raises ValueError"
+  - "await fetch_json('https://example.com', timeout=301) raises ValueError"
+
+  # HTTP errors
+  - "await fetch_json('https://api.example.com/missing') raises HTTPClientError (404)"
+  - "await fetch_json('https://api.example.com/broken') raises HTTPServerError (500)"
+
+  # Edge cases
+  - "await fetch_json('https://api.example.com/empty') returns {}"
+
+DEPENDENCIES:
+  - "httpx>=0.25.0"
+
+EXAMPLES:
+  - |
+    # Simple GET request
+    users = await fetch_json("https://api.example.com/users")
+    for user in users.get("data", []):
+        print(f"{user['id']}: {user['name']}")
+  - |
+    # POST with authentication
+    result = await fetch_json(
+        url="https://api.example.com/users",
+        method="POST",
+        headers={"Authorization": "Bearer my-token"},
+        body={"name": "Alice", "email": "alice@example.com"},
+        timeout=10
+    )
+    print(f"Created user: {result['id']}")
+  - |
+    # Error handling
+    try:
+        data = await fetch_json("https://api.example.com/resource")
+    except HTTPClientError as e:
+        print(f"Client error {e.status_code}: {e.message}")
+    except HTTPServerError as e:
+        print(f"Server error {e.status_code}: {e.message}")
+    except TimeoutError:
+        print("Request timed out")
+
+COMPLEXITY:
+  time: O(1)  # single HTTP round-trip (network-bound)
+  space: O(n)  # n = response payload size

@@ -1,0 +1,81 @@
+---
+meta:
+  name: <tool_name>
+  language: python
+  version: 1.0
+  tags: [mcp-tool, <category>]
+  mcp_server: <server_name>  # MCP server this tool belongs to
+---
+
+RUNE: <tool_function_name>
+
+SIGNATURE: |
+  async def <tool_function_name>(
+      <param_1>: <type>,
+      <param_2>: <type> = <default>
+  ) -> <return_type>
+
+INTENT: |
+  MCP tool that <verb phrase describing what it does>.
+  <Explain what data it accesses or what action it performs.>
+  Designed for AI assistants that need <capability>.
+
+BEHAVIOR:
+  - WHEN <param_1> is empty THEN raise ValueError("<message>")
+  - WHEN <param_2> is out of range THEN raise ValueError("<message>")
+  - VALIDATE all inputs against constraints
+  - PERFORM <core async operation>
+  - WHEN operation fails THEN raise appropriate error with details
+  - WHEN no results found THEN return empty collection
+  - FORMAT results as structured data
+  - RETURN <structured response>
+
+CONSTRAINTS:
+  - "<param_1>: <constraint>"
+  - "<param_2>: <constraint>"
+  - "response: <structure description>"
+
+EDGE_CASES:
+  - "empty required input: raises ValueError"
+  - "parameter out of range: raises ValueError"
+  - "no results: returns empty list/dict"
+  - "timeout: raises TimeoutError"
+  - "permission denied: raises PermissionError"
+
+TESTS:
+  # Happy path
+  - "await <tool_function_name>(<valid_input>) returns <expected_type>"
+  - "await <tool_function_name>(<input>, <param_2>=<value>) applies parameter correctly"
+
+  # Error cases
+  - "await <tool_function_name>('') raises ValueError"
+  - "await <tool_function_name>(<input>, <param_2>=<invalid>) raises ValueError"
+
+  # Edge cases
+  - "await <tool_function_name>(<no_match_input>) returns []"
+
+DEPENDENCIES:
+  - "mcp>=1.0.0"
+  - "<additional async dependency>"
+
+EXAMPLES:
+  - |
+    # Direct usage
+    result = await <tool_function_name>(<example_input>)
+    print(result)
+  - |
+    # MCP server registration
+    from mcp.server import Server
+
+    server = Server("<server_name>")
+
+    @server.tool(
+        name="<tool_function_name>",
+        description="<brief description>"
+    )
+    async def <tool_alias>(<param_1>: <type>, <param_2>: <type> = <default>):
+        return await <tool_function_name>(<param_1>, <param_2>)
+
+COMPLEXITY:
+  time: O(<?>)
+  space: O(<?>)

@@ -1,0 +1,114 @@
+---
+meta:
+  name: generate_tests
+  language: python
+  version: 1.0
+  tags: [agent-tool, testing, code-generation]
+  agent: code_generator
+---
+
+RUNE: generate_tests
+
+SIGNATURE: |
+  def generate_tests(
+      spec_content: str,
+      framework: str = "pytest",
+      include_edge_cases: bool = True
+  ) -> str
+
+INTENT: |
+  Agent tool that generates a comprehensive test suite from a RUNE specification.
+  Produces test code covering all TESTS entries, EDGE_CASES, and error conditions.
+  Used by the Code Generator Agent to ensure spec compliance through testing.
+
+BEHAVIOR:
+  - WHEN spec_content is empty THEN raise ValueError("Spec content cannot be empty")
+  - WHEN spec_content is not valid YAML THEN raise ValueError("Invalid RUNE spec")
+  - WHEN framework not in ["pytest", "unittest"] THEN raise ValueError("Unsupported framework")
+  - PARSE spec to extract RUNE name, SIGNATURE, TESTS, EDGE_CASES, CONSTRAINTS
+  - DETERMINE if function is async from SIGNATURE
+  - GENERATE import statements (function import, framework imports)
+  - FOR each item in TESTS:
+    - GENERATE a test function with descriptive name
+    - TRANSLATE assertion or description into framework-specific test code
+    - WHEN test mentions "raises" THEN generate exception test
+  - WHEN include_edge_cases is True AND EDGE_CASES exists:
+    - FOR each edge case GENERATE additional test function
+  - GENERATE test for each CONSTRAINT violation (input validation tests)
+  - FORMAT test file with proper structure and docstrings
+  - RETURN complete test file as string
+
+CONSTRAINTS:
+  - "spec_content: valid RUNE spec as YAML string"
+  - "framework: 'pytest' or 'unittest'"
+  - "include_edge_cases: boolean, default True"
+  - "output: syntactically valid Python test file"
+
+EDGE_CASES:
+  - "empty spec_content: raises ValueError"
+  - "spec with no TESTS section: generates minimal tests from BEHAVIOR"
+  - "spec with async function: generates async test functions with appropriate markers"
+  - "spec with no EDGE_CASES and include_edge_cases=True: skips edge case tests gracefully"
+  - "TESTS with assertion format: translated directly to assert statements"
+  - "TESTS with description format: translated to test function with comment"
+
+TESTS:
+  # Happy path
+  - |
+    spec = open("examples/basic/calculate_discount.rune").read()
+    tests = generate_tests(spec)
+    "def test_" in tests and "assert" in tests
+
+  # Pytest framework
+  - |
+    spec = open("examples/basic/validate_email.rune").read()
+    tests = generate_tests(spec, framework="pytest")
+    "import pytest" in tests
+
+  # Unittest framework
+  - |
+    spec = open("examples/basic/validate_email.rune").read()
+    tests = generate_tests(spec, framework="unittest")
+    "class Test" in tests and "unittest.TestCase" in tests
+
+  # Without edge cases
+  - |
+    spec = open("examples/basic/calculate_discount.rune").read()
+    with_edges = generate_tests(spec, include_edge_cases=True)
+    without_edges = generate_tests(spec, include_edge_cases=False)
+    len(with_edges) > len(without_edges)
+
+  # Async function spec
+  - |
+    spec = open("examples/integrations/mcp-example/search_documents.rune").read()
+    tests = generate_tests(spec)
+    "async def test_" in tests and "pytest.mark.asyncio" in tests
+
+  # Error cases
+  - "generate_tests('') raises ValueError"
+  - "generate_tests('invalid yaml: [') raises ValueError"
+  - "generate_tests(spec, framework='jest') raises ValueError"
+
+DEPENDENCIES:
+  - "pyyaml>=6.0"
+
+EXAMPLES:
+  - |
+    # Generate tests for a spec
+    with open("examples/basic/calculate_discount.rune") as f:
+        spec = f.read()
+
+    test_code = generate_tests(spec)
+
+    with open("test_calculate_discount.py", "w") as f:
+        f.write(test_code)
+
+    # Run tests: pytest test_calculate_discount.py
+  - |
+    # Generate unittest-style tests
+    test_code = generate_tests(spec, framework="unittest")
+    # Produces class-based test structure with self.assert* methods
+
+COMPLEXITY:
+  time: O(t + e)  # t = number of test cases, e = number of edge cases
+  space: O(t + e)  # storing generated test code

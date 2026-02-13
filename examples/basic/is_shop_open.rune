@@ -1,0 +1,79 @@
+---
+meta:
+  name: is_shop_open
+  language: python
+  version: 1.0
+  tags: [business-logic, validation, datetime]
+---
+
+RUNE: is_shop_open
+
+SIGNATURE: |
+  def is_shop_open(hour: int, day: str) -> bool
+
+INTENT: |
+  Determines if a shop is open based on the current hour and day of the week.
+  Business hours are Monday through Friday, 9:00 AM to 6:00 PM (18:00).
+  The shop is closed on weekends.
+
+BEHAVIOR:
+  - WHEN day is in ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
+    AND hour >= 9 AND hour < 18
+    THEN return True
+  - WHEN day is in ["Saturday", "Sunday"]
+    THEN return False
+  - OTHERWISE return False
+
+CONSTRAINTS:
+  - "hour: must be integer between 0 and 23"
+  - "day: must be valid English weekday name (capitalized)"
+
+EDGE_CASES:
+  - "hour = 9: should return True (opening time, inclusive)"
+  - "hour = 18: should return False (closing time, exclusive)"
+  - "hour = 8: should return False (before opening)"
+  - "hour = 19: should return False (after closing)"
+  - "Invalid day name: should raise ValueError"
+  - "hour out of range (e.g., -1, 24): should raise ValueError"
+
+TESTS:
+  # Happy path - weekdays during business hours
+  - "is_shop_open(10, 'Monday') == True"
+  - "is_shop_open(14, 'Wednesday') == True"
+  - "is_shop_open(17, 'Friday') == True"
+  
+  # Boundary conditions
+  - "is_shop_open(9, 'Monday') == True"
+  - "is_shop_open(18, 'Monday') == False"
+  - "is_shop_open(8, 'Tuesday') == False"
+  - "is_shop_open(19, 'Thursday') == False"
+  
+  # Weekends (always closed)
+  - "is_shop_open(10, 'Saturday') == False"
+  - "is_shop_open(12, 'Sunday') == False"
+  - "is_shop_open(14, 'Saturday') == False"
+  
+  # Error cases
+  - "is_shop_open(-1, 'Monday') raises ValueError"
+  - "is_shop_open(24, 'Monday') raises ValueError"
+  - "is_shop_open(10, 'Lunes') raises ValueError"
+  - "is_shop_open(10, 'monday') raises ValueError"
+
+DEPENDENCIES: []
+
+EXAMPLES:
+  - |
+    # Check if shop is open right now
+    if is_shop_open(current_hour, current_day):
+        print("We're open!")
+    else:
+        print("Sorry, we're closed.")
+  - |
+    # Batch check business hours
+    hours = range(0, 24)
+    open_hours = [h for h in hours if is_shop_open(h, "Monday")]
+    # Result: [9, 10, 11, 12, 13, 14, 15, 16, 17]
+
+COMPLEXITY:
+  time: O(1)
+  space: O(1)

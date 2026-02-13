@@ -1,0 +1,105 @@
+---
+meta:
+  name: create_rune_spec
+  language: python
+  version: 1.0
+  tags: [agent-tool, spec-creation, yaml]
+  agent: rune_spec_writer
+---
+
+RUNE: create_rune_spec
+
+SIGNATURE: |
+  def create_rune_spec(
+      function_name: str,
+      language: str,
+      description: str,
+      parameters: list[dict[str, str]],
+      return_type: str,
+      tags: list[str] | None = None
+  ) -> str
+
+INTENT: |
+  Agent tool that generates a complete RUNE specification from a function description.
+  Produces valid YAML output with all required and relevant optional fields.
+  Used by the RUNE Spec Writer Agent to create new specifications.
+
+BEHAVIOR:
+  - WHEN function_name is empty THEN raise ValueError("Function name cannot be empty")
+  - WHEN function_name contains spaces or special characters THEN raise ValueError("Function name must be a valid identifier")
+  - WHEN language is not in supported set THEN raise ValueError("Unsupported language")
+  - WHEN description is empty THEN raise ValueError("Description cannot be empty")
+  - WHEN parameters is not a list THEN raise ValueError("Parameters must be a list")
+  - BUILD meta section with name, language, version 1.0, and tags
+  - BUILD SIGNATURE from function_name, parameters, and return_type in target language syntax
+  - DERIVE INTENT from description (condense to 1-3 sentences)
+  - GENERATE BEHAVIOR rules using WHEN/THEN format from description and parameters
+  - GENERATE CONSTRAINTS from parameter types and descriptions
+  - GENERATE EDGE_CASES for empty inputs, boundary values, and type errors
+  - GENERATE minimum 3 TESTS (happy path, boundary, error)
+  - GENERATE at least 1 EXAMPLE showing typical usage
+  - FORMAT as valid YAML with --- delimiters
+  - RETURN complete RUNE spec as string
+
+CONSTRAINTS:
+  - "function_name: valid identifier (letters, digits, underscores, no leading digit)"
+  - "language: one of python, typescript, javascript, go, rust, java, csharp, ruby, php, swift, kotlin"
+  - "description: non-empty string describing the function purpose"
+  - "parameters: list of dicts with keys 'name', 'type', and optional 'description'"
+  - "return_type: valid type expression in target language"
+  - "tags: optional list of categorization strings"
+
+EDGE_CASES:
+  - "empty function_name: raises ValueError"
+  - "function_name with spaces: raises ValueError"
+  - "unsupported language: raises ValueError"
+  - "empty parameters list: generates function with no parameters"
+  - "parameters with no type info: infers Any/unknown type"
+  - "very long description: truncated for INTENT, full detail in BEHAVIOR"
+
+TESTS:
+  # Happy path
+  - |
+    spec = create_rune_spec(
+        "calculate_tax", "python", "Calculates sales tax for a given amount",
+        [{"name": "amount", "type": "float"}, {"name": "rate", "type": "float"}],
+        "float"
+    )
+    "RUNE: calculate_tax" in spec and "SIGNATURE:" in spec and "TESTS:" in spec
+
+  # All required sections present
+  - |
+    spec = create_rune_spec("greet", "python", "Returns a greeting", [{"name": "name", "type": "str"}], "str")
+    all(field in spec for field in ["meta:", "RUNE:", "SIGNATURE:", "INTENT:", "BEHAVIOR:", "TESTS:"])
+
+  # Valid YAML output
+  - |
+    import yaml
+    spec = create_rune_spec("add", "python", "Adds two numbers", [{"name": "a", "type": "int"}, {"name": "b", "type": "int"}], "int")
+    yaml.safe_load(spec) is not None
+
+  # Error cases
+  - "create_rune_spec('', 'python', 'desc', [], 'str') raises ValueError"
+  - "create_rune_spec('my func', 'python', 'desc', [], 'str') raises ValueError"
+  - "create_rune_spec('func', 'cobol', 'desc', [], 'str') raises ValueError"
+  - "create_rune_spec('func', 'python', '', [], 'str') raises ValueError"
+
+DEPENDENCIES:
+  - "pyyaml>=6.0"
+
+EXAMPLES:
+  - |
+    spec = create_rune_spec(
+        function_name="validate_email",
+        language="python",
+        description="Validates an email address against RFC 5322 and returns whether it is valid with an error message",
+        parameters=[{"name": "email", "type": "str", "description": "Email address to validate"}],
+        return_type="tuple[bool, str]",
+        tags=["validation", "email"]
+    )
+    print(spec)
+    # Outputs a complete RUNE spec ready to save as validate_email.rune
+
+COMPLEXITY:
+  time: O(p)  # p = number of parameters (string building)
+  space: O(s)  # s = size of generated spec string
