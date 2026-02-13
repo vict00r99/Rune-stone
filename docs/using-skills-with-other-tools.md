@@ -366,28 +366,6 @@ If using OpenAI's custom GPTs:
 
 ---
 
-## Validation
-
-Regardless of which AI tool you use, you can validate YAML `.rune` files with the CLI validator:
-
-```bash
-# Validate a single spec
-python tools/validate.py my_spec.rune
-
-# Validate all specs in a directory
-python tools/validate.py specs/
-
-# Strict mode (checks optional fields)
-python tools/validate.py --strict my_spec.rune
-
-# JSON output for CI/CD
-python tools/validate.py --json specs/ > validation-report.json
-```
-
-Note: The validator works with `.rune` YAML files. Markdown specs are validated by the AI during generation (the skill file includes a validation checklist).
-
----
-
 ## Comparison
 
 | Feature | Claude Code | Claude Projects | Cursor | Aider | Copilot Chat |
@@ -395,7 +373,6 @@ Note: The validator works with `.rune` YAML files. Markdown specs are validated 
 | Auto-load skill | Yes | Yes | Yes | With config | No |
 | Reference .rune files | Yes | Upload | Yes | `--read` | `#file` |
 | Reference markdown specs | Yes | Upload | Yes | `--read` | `#file` |
-| Run validator | Yes (bash) | No | Yes (terminal) | Yes (bash) | No |
 | Generate from spec | Yes | Yes | Yes | Yes | Yes |
 
 ---
@@ -415,11 +392,10 @@ Following the RUNE pattern from rune-writer.md, create a spec for...
 
 **Problem:** AI generates `.rune` files with invalid YAML.
 
-**Solution:** Run the validator after generation:
-```bash
-python tools/validate.py generated_spec.rune
+**Solution:** Ask the AI to fix it:
 ```
-Then ask the AI to fix any reported errors.
+This .rune file has invalid YAML. Fix the syntax errors.
+```
 
 ### Tool doesn't support file references
 

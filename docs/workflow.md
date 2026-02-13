@@ -241,7 +241,7 @@ Yes. The value is in having a spec to reference, not in who writes it.
 Update the spec first, then regenerate the implementation.
 
 **Do I need to install anything?**
-No. Your existing AI tools are the runtime. Optionally use `python tools/validate.py` for YAML spec validation.
+No. Your existing AI tools are the runtime.
 
 **Do I need templates to start?**
 No. Tell the AI your requirements and it generates a complete spec. Templates are optional reference material for manual writing.
