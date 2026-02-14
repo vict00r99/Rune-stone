@@ -108,9 +108,9 @@ Or keep them as separate `.rune` files — whatever fits your workflow.
 
 ## Getting Started
 
-**1. Load the skill into your AI tool.**
+**1. Load the Writer skill into your AI tool.**
 
-Upload [`skills/rune-writer.md`](skills/rune-writer.md) to Claude Projects, paste it into ChatGPT, add it to `.cursorrules`, or any other method. This single file teaches the AI the RUNE pattern.
+Upload [`skills/rune-writer.md`](skills/rune-writer.md) to Claude Projects, paste it into ChatGPT, add it to `.cursorrules`, or any other method. This teaches the AI the RUNE pattern.
 
 **2. Describe what you need.**
 
@@ -122,9 +122,25 @@ Review it. Does the BEHAVIOR cover all your rules? Are the TESTS complete? Itera
 
 **4. Implement from the spec.**
 
-> "Implement check_free_shipping.rune in Python"
+> "Implement check_free_shipping.rune"
 
-The AI generates code + tests that match the spec exactly.
+The AI generates code + tests that follow the spec exactly.
+
+## Skills
+
+7 skills for the full lifecycle. Start with the Writer — add others as needed.
+
+| Skill | What it does |
+|-------|-------------|
+| **[Writer](skills/rune-writer.md)** | Create specs from requirements. Implement code from specs. |
+| **[Validator](skills/rune-validator.md)** | Check if a spec is complete and well-formed. |
+| **[Refiner](skills/rune-refiner.md)** | Suggest missing tests, edge cases, and clarifications. |
+| **[Test Generator](skills/rune-test-generator.md)** | Generate runnable test files from a spec. |
+| **[Diff](skills/rune-diff.md)** | Compare spec vs implementation to detect drift. |
+| **[From Code](skills/rune-from-code.md)** | Reverse-engineer a spec from existing code. |
+| **[Multi-Lang](skills/rune-multi-lang.md)** | Generate implementations in multiple languages from one spec. |
+
+Copy [`AGENTS.md`](AGENTS.md) into your project as a reference for your AI tools.
 
 ## Examples
 
@@ -136,12 +152,12 @@ The AI generates code + tests that match the spec exactly.
 
 ## Documentation
 
-- **[Workflow Guide](docs/workflow.md)** — How analysts generate specs and developers implement them
 - **[Getting Started](docs/getting-started.md)** — Quick tutorial
+- **[Workflow Guide](docs/workflow.md)** — Complete guide with all skills
 - **[Before & After](docs/before-after.md)** — Side-by-side comparison
 - **[SPEC.md](SPEC.md)** — Full pattern reference
 - **[Best Practices](docs/best-practices.md)** — Writing guidelines
-- **[Templates](templates/)** — Starter templates
+- **[Templates](templates/)** — Starter templates for manual writing
 
 ## Contributing
 

@@ -45,8 +45,9 @@ Every RUNE spec defines these fields:
 
 ## Format: YAML (.rune files)
 
-Use standalone `.rune` files when you want formal, parseable specs:
+Use standalone `.rune` files when you want formal, parseable specs. The SIGNATURE uses the target language's real syntax:
 
+**Python example:**
 ```yaml
 ---
 meta:
@@ -69,39 +70,73 @@ BEHAVIOR:
   - WHEN code is empty THEN return (False, "Coupon code cannot be empty")
   - WHEN code not found (case-insensitive) THEN return (False, "Coupon code not found")
   - WHEN coupon has expired THEN return (False, "Coupon has expired")
-  - WHEN discount value is invalid THEN return (False, "Invalid discount value")
   - OTHERWISE return (True, matching_coupon)
-
-CONSTRAINTS:
-  - "code: non-empty string, compared case-insensitively"
-  - "coupons: list of dicts with keys code, discount_type, discount_value, expires_at"
-  - "current_date: ISO 8601 string (YYYY-MM-DD)"
-
-EDGE_CASES:
-  - "empty code: returns error"
-  - "case mismatch (SAVE10 vs save10): should match"
-  - "expires today: still valid"
-  - "empty coupons list: not found"
 
 TESTS:
   - "validate_coupon('SAVE10', [...], '2025-01-15')[0] == True"
   - "validate_coupon('save10', [...], '2025-01-15')[0] == True"
   - "validate_coupon('INVALID', [...], '2025-01-15')[0] == False"
-  - "validate_coupon('OLD', [...], '2025-01-15')[0] == False"
   - "validate_coupon('', [], '2025-01-15')[0] == False"
-
-DEPENDENCIES: []
-
-EXAMPLES:
-  - |
-    is_valid, result = validate_coupon("SAVE10", coupons, "2025-06-15")
-    if is_valid:
-        print(f"Discount: {result['discount_value']}%")
-
-COMPLEXITY:
-  time: O(n)
-  space: O(1)
 ```
+
+**Go example:**
+```yaml
+---
+meta:
+  name: CalculateDiscount
+  language: go
+  version: 1.0
+---
+
+RUNE: CalculateDiscount
+
+SIGNATURE: |
+  func CalculateDiscount(price float64, percentage int) (float64, error)
+
+INTENT: |
+  Calculates the final price after applying a discount percentage.
+  Returns the discounted price rounded to 2 decimal places.
+
+BEHAVIOR:
+  - WHEN percentage < 0 THEN return error "Discount percentage cannot be negative"
+  - WHEN percentage > 100 THEN return error "Discount percentage cannot exceed 100"
+  - WHEN price < 0 THEN return error "Price cannot be negative"
+  - CALCULATE final_price = price - (price * percentage / 100), round to 2 decimals
+  - RETURN final_price
+
+TESTS:
+  - "CalculateDiscount(100.0, 20) == 80.0"
+  - "CalculateDiscount(100.0, 0) == 100.0"
+  - "CalculateDiscount(-10.0, 20) returns error"
+```
+
+**TypeScript example:**
+```yaml
+---
+meta:
+  name: calculateDiscount
+  language: typescript
+  version: 1.0
+---
+
+RUNE: calculateDiscount
+
+SIGNATURE: |
+  function calculateDiscount(price: number, percentage: number): number
+
+BEHAVIOR:
+  - WHEN percentage < 0 THEN throw "Discount percentage cannot be negative"
+  - WHEN percentage > 100 THEN throw "Discount percentage cannot exceed 100"
+  - WHEN price < 0 THEN throw "Price cannot be negative"
+  - RETURN price - (price * percentage / 100), rounded to 2 decimals
+
+TESTS:
+  - "calculateDiscount(100.0, 20) === 80.0"
+  - "calculateDiscount(100.0, 0) === 100.0"
+  - "calculateDiscount(-10.0, 20) throws"
+```
+
+The pattern is the same in every language. Only the SIGNATURE syntax and naming conventions change.
 
 ## Format: Markdown (embedded in any .md)
 
@@ -118,19 +153,11 @@ Use markdown sections when embedding specs inside AGENTS.md or other docs:
 - WHEN code is empty THEN return (False, "Coupon code cannot be empty")
 - WHEN code not found (case-insensitive) THEN return (False, "Coupon code not found")
 - WHEN coupon has expired THEN return (False, "Coupon has expired")
-- WHEN discount value is invalid THEN return (False, "Invalid discount value")
 - OTHERWISE return (True, matching_coupon)
 
 **TESTS:**
 - `validate_coupon('SAVE10', [...], '2025-01-15')[0] == True`
-- `validate_coupon('save10', [...], '2025-01-15')[0] == True`
-- `validate_coupon('INVALID', [...], '2025-01-15')[0] == False`
 - `validate_coupon('', [], '2025-01-15')[0] == False`
-
-**EDGE_CASES:**
-- Case mismatch (SAVE10 vs save10): should match
-- Expires today: still valid
-- Empty coupons list: not found
 ```
 
 Both formats contain the same information. The AI treats them identically.
@@ -190,11 +217,11 @@ When given a RUNE spec (in either format) to implement, generate code that follo
 ### Process
 
 1. **Use the exact SIGNATURE** — function name, parameters, types, return type
-2. **Implement each BEHAVIOR rule** in order — each WHEN/THEN becomes an if/elif/else
+2. **Implement each BEHAVIOR rule** in order — each WHEN/THEN becomes a conditional branch in the target language
 3. **Add input validation** from CONSTRAINTS
 4. **Handle every EDGE_CASE**
-5. **Add a docstring** from INTENT
-6. **Generate tests** from TESTS using the appropriate framework (pytest, Jest, etc.)
+5. **Add a doc comment** from INTENT (docstring, JSDoc, GoDoc, rustdoc, etc.)
+6. **Generate tests** from TESTS using the target language's testing framework
 
 ### Rules
 
