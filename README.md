@@ -106,11 +106,41 @@ Or keep them as separate `.rune` files — whatever fits your workflow.
 | "It works on my prompt" | Reproducible results |
 | Requirements lost in chat | Specs live in the repo |
 
+## Share Specs, Not Code
+
+RUNE specs are complete contracts. A colleague can rebuild your entire project from specs alone — without seeing a single line of your code.
+
+```
+Developer A                          Developer B
+
+writes specs ──▶ shares .rune files ──▶ generates code + tests
+(Python)           (no code)              (Go, Rust, whatever)
+```
+
+This works because the spec captures **what** the function does, not **how**:
+
+- The SIGNATURE defines the exact interface
+- The BEHAVIOR defines every rule the function must follow
+- The TESTS define the expected outputs for given inputs
+- The EDGE_CASES define boundary conditions
+
+Two developers implementing the same spec in different languages, with different AI tools, on different machines — will produce code with **identical behavior**. The internal implementation may differ (variable names, algorithms, idioms), but the contract is the same.
+
+**Practical implications:**
+
+- **Onboarding** — New team members get specs, not a codebase tour. They generate working code on day one.
+- **Cross-team collaboration** — Backend and frontend teams share specs, not implementations. Each generates code in their own language.
+- **Code reviews** — Review the spec first. If the spec is right, the implementation follows.
+- **Rebuilding from scratch** — Lost the code? The specs are enough to regenerate it with consistent behavior.
+- **Multi-vendor projects** — Share specs with external teams without exposing proprietary code.
+
+A RUNE spec is portable knowledge. Code is a local artifact.
+
 ## Getting Started
 
 **1. Load the Writer skill into your AI tool.**
 
-Upload [`skills/rune-writer.md`](skills/rune-writer.md) to Claude Projects, paste it into ChatGPT, add it to `.cursorrules`, or any other method. This teaches the AI the RUNE pattern.
+Upload [`skills/rune-writer/SKILL.md`](skills/rune-writer/SKILL.md) to Claude Projects, paste it into ChatGPT, add it to `.cursorrules`, or any other method. This teaches the AI the RUNE pattern.
 
 **2. Describe what you need.**
 
@@ -132,13 +162,13 @@ The AI generates code + tests that follow the spec exactly.
 
 | Skill | What it does |
 |-------|-------------|
-| **[Writer](skills/rune-writer.md)** | Create specs from requirements. Implement code from specs. |
-| **[Validator](skills/rune-validator.md)** | Check if a spec is complete and well-formed. |
-| **[Refiner](skills/rune-refiner.md)** | Suggest missing tests, edge cases, and clarifications. |
-| **[Test Generator](skills/rune-test-generator.md)** | Generate runnable test files from a spec. |
-| **[Diff](skills/rune-diff.md)** | Compare spec vs implementation to detect drift. |
-| **[From Code](skills/rune-from-code.md)** | Reverse-engineer a spec from existing code. |
-| **[Multi-Lang](skills/rune-multi-lang.md)** | Generate implementations in multiple languages from one spec. |
+| **[Writer](skills/rune-writer/SKILL.md)** | Create specs from requirements. Implement code from specs. |
+| **[Validator](skills/rune-validator/SKILL.md)** | Check if a spec is complete and well-formed. |
+| **[Refiner](skills/rune-refiner/SKILL.md)** | Suggest missing tests, edge cases, and clarifications. |
+| **[Test Generator](skills/rune-test-generator/SKILL.md)** | Generate runnable test files from a spec. |
+| **[Diff](skills/rune-diff/SKILL.md)** | Compare spec vs implementation to detect drift. |
+| **[From Code](skills/rune-from-code/SKILL.md)** | Reverse-engineer a spec from existing code. |
+| **[Multi-Lang](skills/rune-multi-lang/SKILL.md)** | Generate implementations in multiple languages from one spec. |
 
 Copy [`AGENTS.md`](AGENTS.md) into your project as a reference for your AI tools.
 

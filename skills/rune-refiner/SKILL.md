@@ -1,7 +1,7 @@
-# RUNE Refiner Skill
-
-Analyzes existing RUNE specifications and suggests concrete improvements. Unlike the validator (which checks rules), the refiner identifies weaknesses and proposes specific content to strengthen the spec.
-
+---
+name: rune-refiner
+description: Analyze RUNE specifications and suggest improvements. Use when a spec is valid but may have missing tests, uncovered edge cases, ambiguous behavior rules, or incomplete constraints.
+license: MIT
 ---
 
 ## How to Use

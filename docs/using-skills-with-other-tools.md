@@ -4,7 +4,7 @@ This guide shows how to configure popular AI coding assistants to use the RUNE p
 
 ## Overview
 
-The RUNE skill lives in `skills/rune-writer.md`. This single file teaches any AI assistant the complete RUNE pattern — both formats (YAML `.rune` files and Markdown sections), spec generation, validation, and implementation. Each tool has its own way of loading it.
+The RUNE skill lives in `skills/rune-writer/SKILL.md`. This single file teaches any AI assistant the complete RUNE pattern — both formats (YAML `.rune` files and Markdown sections), spec generation, validation, and implementation. Each tool has its own way of loading it.
 
 | Tool | Method | Auto-loads? |
 |------|--------|-------------|
@@ -29,7 +29,7 @@ Copy the skill file into your project's `.claude/skills/` directory:
 
 ```bash
 mkdir -p .claude/skills
-cp skills/rune-writer.md .claude/skills/runestone-skills.md
+cp skills/rune-writer/SKILL.md .claude/skills/runestone-skills.md
 ```
 
 ### Verify
@@ -44,10 +44,10 @@ claude
 
 ### Keeping in Sync
 
-If you update `skills/rune-writer.md`, re-copy it:
+If you update `skills/rune-writer/SKILL.md`, re-copy it:
 
 ```bash
-cp skills/rune-writer.md .claude/skills/runestone-skills.md
+cp skills/rune-writer/SKILL.md .claude/skills/runestone-skills.md
 ```
 
 ---
@@ -61,7 +61,7 @@ Claude Projects let you upload files as persistent knowledge across conversation
 1. Open [claude.ai](https://claude.ai) and create or open a project
 2. Go to **Project Knowledge**
 3. Click **Add content** and upload:
-   - `skills/rune-writer.md` (the RUNE pattern)
+   - `skills/rune-writer/SKILL.md` (the RUNE pattern)
    - Any `.rune` files or docs containing markdown specs you want Claude to reference
 4. Add to **Project Instructions**:
 
@@ -117,7 +117,7 @@ Cursor reads project-level instructions from `.cursorrules` at the project root.
 Create `.cursorrules` in your project root:
 
 ```bash
-cp skills/rune-writer.md .cursorrules
+cp skills/rune-writer/SKILL.md .cursorrules
 ```
 
 ### Setup (Option B: Reference in Existing Rules)
@@ -133,7 +133,7 @@ This project uses the RUNE specification pattern for AI code generation.
 Specs can be written as `.rune` YAML files or as Markdown sections in AGENTS.md.
 
 When working with RUNE specs (either format):
-- Read `skills/rune-writer.md` for the complete pattern reference
+- Read `skills/rune-writer/SKILL.md` for the complete pattern reference
 - Required fields: SIGNATURE, INTENT, BEHAVIOR, TESTS
 - YAML `.rune` files also need: meta (name, language), RUNE header
 - Use WHEN/THEN format in BEHAVIOR sections
@@ -152,7 +152,7 @@ When asked to implement from a spec:
 
 ### Setup (Option C: Cursor Settings)
 
-In Cursor, go to **Settings > Rules for AI** and paste the content of `skills/rune-writer.md`.
+In Cursor, go to **Settings > Rules for AI** and paste the content of `skills/rune-writer/SKILL.md`.
 
 ### Usage
 
@@ -175,7 +175,7 @@ Windsurf uses `.windsurfrules` for project-level AI instructions.
 Create `.windsurfrules` in your project root:
 
 ```bash
-cp skills/rune-writer.md .windsurfrules
+cp skills/rune-writer/SKILL.md .windsurfrules
 ```
 
 Or add a condensed version:
@@ -186,7 +186,7 @@ Or add a condensed version:
 ## RUNE Specification Pattern
 
 This project uses RUNE for AI code generation specs.
-Pattern reference: SPEC.md | Skill: skills/rune-writer.md
+Pattern reference: SPEC.md | Skill: skills/rune-writer/SKILL.md
 
 Two formats:
 - YAML (.rune files): standalone specs with meta header (name, language)
@@ -217,13 +217,13 @@ Pass the skill file with `--read`:
 
 ```bash
 # Single session
-aider --read skills/rune-writer.md src/my_module.py
+aider --read skills/rune-writer/SKILL.md src/my_module.py
 
 # With a .rune spec for implementation
-aider --read skills/rune-writer.md --read specs/validate_coupon.rune src/coupon.py
+aider --read skills/rune-writer/SKILL.md --read specs/validate_coupon.rune src/coupon.py
 
 # With an AGENTS.md that contains markdown specs
-aider --read skills/rune-writer.md --read AGENTS.md src/coupon.py
+aider --read skills/rune-writer/SKILL.md --read AGENTS.md src/coupon.py
 ```
 
 ### Setup (Option B: Configuration File)
@@ -233,7 +233,7 @@ Create `.aider.conf.yml` in the project root:
 ```yaml
 # .aider.conf.yml
 read:
-  - skills/rune-writer.md
+  - skills/rune-writer/SKILL.md
 ```
 
 Now every `aider` session in this project automatically loads the skill:
@@ -247,15 +247,15 @@ aider src/my_module.py
 
 ```bash
 # Create a spec (markdown format)
-aider --read skills/rune-writer.md docs/specs.md
+aider --read skills/rune-writer/SKILL.md docs/specs.md
 > Create a RUNE spec for a markdown-to-HTML converter
 
 # Create a spec (YAML format)
-aider --read skills/rune-writer.md new_spec.rune
+aider --read skills/rune-writer/SKILL.md new_spec.rune
 > Create a .rune file for a markdown-to-HTML converter
 
 # Implement from spec
-aider --read skills/rune-writer.md --read specs/my_spec.rune src/implementation.py
+aider --read skills/rune-writer/SKILL.md --read specs/my_spec.rune src/implementation.py
 > Implement the function defined in my_spec.rune
 ```
 
@@ -271,11 +271,11 @@ Add to `.continuerc.json` in your project root:
 
 ```json
 {
-  "systemMessage": "You are working on a project that uses the RUNE specification pattern. Specs can be written as YAML (.rune files) or as Markdown sections in AGENTS.md. Follow the pattern defined in skills/rune-writer.md. Required fields: SIGNATURE, INTENT, BEHAVIOR (WHEN/THEN format), TESTS (3+ cases). YAML files also need a meta header with name and language.",
+  "systemMessage": "You are working on a project that uses the RUNE specification pattern. Specs can be written as YAML (.rune files) or as Markdown sections in AGENTS.md. Follow the pattern defined in skills/rune-writer/SKILL.md. Required fields: SIGNATURE, INTENT, BEHAVIOR (WHEN/THEN format), TESTS (3+ cases). YAML files also need a meta header with name and language.",
   "docs": [
     {
       "title": "RUNE Skill",
-      "startUrl": "skills/rune-writer.md"
+      "startUrl": "skills/rune-writer/SKILL.md"
     }
   ]
 }
@@ -286,7 +286,7 @@ Add to `.continuerc.json` in your project root:
 In the Continue.dev chat panel, reference files with `@`:
 
 ```
-@skills/rune-writer.md Create a RUNE spec for a rate limiter
+@skills/rune-writer/SKILL.md Create a RUNE spec for a rate limiter
 @specs/validate_coupon.rune Implement this spec
 @AGENTS.md Implement the validate_coupon spec from this file
 ```
@@ -304,12 +304,12 @@ No configuration needed -- reference files directly in chat.
 ### Usage
 
 ```
-#file:skills/rune-writer.md Create a RUNE spec for a JWT token validator
+#file:skills/rune-writer/SKILL.md Create a RUNE spec for a JWT token validator
 
-#file:skills/rune-writer.md #file:specs/validate_email.rune
+#file:skills/rune-writer/SKILL.md #file:specs/validate_email.rune
 Implement this spec following the RUNE pattern
 
-#file:skills/rune-writer.md #file:AGENTS.md
+#file:skills/rune-writer/SKILL.md #file:AGENTS.md
 Implement the validate_coupon spec from AGENTS.md
 ```
 
@@ -324,7 +324,7 @@ This project uses the RUNE pattern for AI code generation.
 Specs can be written as YAML (.rune files) or as Markdown sections in AGENTS.md.
 
 When working with RUNE specs:
-- Read `skills/rune-writer.md` for the complete pattern
+- Read `skills/rune-writer/SKILL.md` for the complete pattern
 - Required fields: SIGNATURE, INTENT, BEHAVIOR, TESTS
 - YAML files also need: meta header (name, language)
 - Use WHEN/THEN format in BEHAVIOR
@@ -340,7 +340,7 @@ For AI tools that don't support file-based configuration, paste the skill conten
 
 ### Setup
 
-1. Open `skills/rune-writer.md` in a text editor
+1. Open `skills/rune-writer/SKILL.md` in a text editor
 2. Copy the entire contents
 3. Paste at the start of your AI conversation:
 
@@ -348,7 +348,7 @@ For AI tools that don't support file-based configuration, paste the skill conten
 Here is the RUNE specification pattern. Follow it when I ask
 you to create, validate, or implement specs:
 
-[paste contents of skills/rune-writer.md]
+[paste contents of skills/rune-writer/SKILL.md]
 
 ---
 
@@ -360,7 +360,7 @@ Now let's work. Create a RUNE spec for a password strength checker.
 If using OpenAI's custom GPTs:
 
 1. Create a new GPT
-2. In **Instructions**, paste the content of `skills/rune-writer.md`
+2. In **Instructions**, paste the content of `skills/rune-writer/SKILL.md`
 3. In **Knowledge**, upload example `.rune` files or markdown specs
 4. The GPT will always follow the RUNE pattern
 
@@ -412,11 +412,11 @@ Specs can be YAML (.rune files) or Markdown sections.
 
 ### Skill file out of sync
 
-**Problem:** `.claude/skills/runestone-skills.md` differs from `skills/rune-writer.md`.
+**Problem:** `.claude/skills/runestone-skills.md` differs from `skills/rune-writer/SKILL.md`.
 
 **Solution:** The `skills/` directory is the source of truth. Copy it:
 ```bash
-cp skills/rune-writer.md .claude/skills/runestone-skills.md
+cp skills/rune-writer/SKILL.md .claude/skills/runestone-skills.md
 ```
 
 ---
@@ -424,6 +424,6 @@ cp skills/rune-writer.md .claude/skills/runestone-skills.md
 ## Resources
 
 - [RUNE Specification](../SPEC.md) -- Full pattern reference
-- [Skill File](../skills/rune-writer.md) -- The one file that teaches the AI
+- [Skill File](../skills/rune-writer/SKILL.md) -- The one file that teaches the AI
 - [Getting Started](getting-started.md) -- 5-minute tutorial
 - [Workflow Guide](workflow.md) -- Team adoption and workflow

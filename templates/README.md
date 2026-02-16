@@ -4,7 +4,7 @@ Starter templates for writing RUNE specs **manually** in YAML format.
 
 ## When to use templates
 
-**You probably don't need them.** If you use AI with the skill file (`skills/rune-writer.md`), the AI generates complete specs from your requirements — no template needed.
+**You probably don't need them.** If you use AI with the skill file (`skills/rune-writer/SKILL.md`), the AI generates complete specs from your requirements — no template needed.
 
 Templates are useful if you:
 - Prefer writing specs by hand

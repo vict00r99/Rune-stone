@@ -6,14 +6,14 @@ RUNE is a specification pattern that acts as a contract between what you want an
 
 ### 1. Load the skill
 
-Upload [`skills/rune-writer.md`](../skills/rune-writer.md) to your AI tool. This teaches the AI the RUNE pattern.
+Upload [`skills/rune-writer/SKILL.md`](../skills/rune-writer/SKILL.md) to your AI tool. This teaches the AI the RUNE pattern.
 
 | Tool | How to load |
 |------|------------|
 | Claude Code | Copy to `.claude/skills/` |
 | Claude Projects | Upload to Project Knowledge |
 | Cursor | Copy to `.cursorrules` |
-| Aider | `aider --read skills/rune-writer.md` |
+| Aider | `aider --read skills/rune-writer/SKILL.md` |
 | Any tool | Paste content into conversation |
 
 For detailed setup per tool, see [Using Skills with AI Tools](using-skills-with-other-tools.md).
@@ -113,13 +113,13 @@ Requirements ──▶ Writer ──▶ Validator ──▶ Refiner ──▶ Wr
 
 | Skill | File | What it does |
 |-------|------|-------------|
-| **Writer** | [`rune-writer.md`](../skills/rune-writer.md) | Create specs and implement code from them |
-| **Validator** | [`rune-validator.md`](../skills/rune-validator.md) | Check if a spec is complete and well-formed |
-| **Refiner** | [`rune-refiner.md`](../skills/rune-refiner.md) | Suggest missing tests, edge cases, and clarifications |
-| **Test Generator** | [`rune-test-generator.md`](../skills/rune-test-generator.md) | Generate runnable test files from a spec |
-| **Diff** | [`rune-diff.md`](../skills/rune-diff.md) | Compare spec vs implementation to detect drift |
-| **From Code** | [`rune-from-code.md`](../skills/rune-from-code.md) | Reverse-engineer a spec from existing code |
-| **Multi-Lang** | [`rune-multi-lang.md`](../skills/rune-multi-lang.md) | Generate implementations in multiple languages from one spec |
+| **Writer** | [`rune-writer/SKILL.md`](../skills/rune-writer/SKILL.md) | Create specs and implement code from them |
+| **Validator** | [`rune-validator/SKILL.md`](../skills/rune-validator/SKILL.md) | Check if a spec is complete and well-formed |
+| **Refiner** | [`rune-refiner/SKILL.md`](../skills/rune-refiner/SKILL.md) | Suggest missing tests, edge cases, and clarifications |
+| **Test Generator** | [`rune-test-generator/SKILL.md`](../skills/rune-test-generator/SKILL.md) | Generate runnable test files from a spec |
+| **Diff** | [`rune-diff/SKILL.md`](../skills/rune-diff/SKILL.md) | Compare spec vs implementation to detect drift |
+| **From Code** | [`rune-from-code/SKILL.md`](../skills/rune-from-code/SKILL.md) | Reverse-engineer a spec from existing code |
+| **Multi-Lang** | [`rune-multi-lang/SKILL.md`](../skills/rune-multi-lang/SKILL.md) | Generate implementations in multiple languages from one spec |
 
 **Start with just the Writer.** Add Validator and Test Generator when you want more rigor. Add the rest as needed.
 

@@ -21,13 +21,13 @@ Load the skills you need into your AI tool:
 
 | Skill | File | Role |
 |-------|------|------|
-| **Writer** (required) | `skills/rune-writer.md` | Creates specs and implements code |
-| Validator | `skills/rune-validator.md` | Checks spec completeness |
-| Refiner | `skills/rune-refiner.md` | Suggests improvements |
-| Test Generator | `skills/rune-test-generator.md` | Generates runnable test files |
-| Diff | `skills/rune-diff.md` | Audits spec vs code drift |
-| From Code | `skills/rune-from-code.md` | Reverse-engineers specs from existing code |
-| Multi-Lang | `skills/rune-multi-lang.md` | Generates code in multiple languages |
+| **Writer** (required) | `skills/rune-writer/SKILL.md` | Creates specs and implements code |
+| Validator | `skills/rune-validator/SKILL.md` | Checks spec completeness |
+| Refiner | `skills/rune-refiner/SKILL.md` | Suggests improvements |
+| Test Generator | `skills/rune-test-generator/SKILL.md` | Generates runnable test files |
+| Diff | `skills/rune-diff/SKILL.md` | Audits spec vs code drift |
+| From Code | `skills/rune-from-code/SKILL.md` | Reverse-engineers specs from existing code |
+| Multi-Lang | `skills/rune-multi-lang/SKILL.md` | Generates code in multiple languages |
 
 **Start with just the Writer.** Add others as your workflow matures.
 
@@ -37,7 +37,7 @@ Load the skills you need into your AI tool:
 | Claude Projects | Upload to Project Knowledge |
 | Cursor | Copy to `.cursorrules` |
 | Windsurf | Copy to `.windsurfrules` |
-| Aider | `aider --read skills/rune-writer.md` |
+| Aider | `aider --read skills/rune-writer/SKILL.md` |
 | Any tool | Paste content into conversation |
 
 For detailed setup per tool, see [Using Skills with AI Tools](using-skills-with-other-tools.md).

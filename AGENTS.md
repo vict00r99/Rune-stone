@@ -12,29 +12,29 @@ Specs can be written as **YAML `.rune` files** or as **Markdown sections** in th
 
 ## Skills
 
-Runestone provides 7 skills. Each is a standalone `.md` file you can load into any AI tool. Load only the ones you need.
+Runestone provides 7 skills. Each is a `SKILL.md` file inside its own directory, following the [Anthropic Skills format](https://github.com/anthropics/skills). Load only the ones you need.
 
 ### Core
 
 | Skill | File | When to use |
 |-------|------|-------------|
-| **Writer** | `skills/rune-writer.md` | Create specs from requirements. Implement code from specs. |
-| **Validator** | `skills/rune-validator.md` | Check if a spec is complete and well-formed. |
+| **Writer** | `skills/rune-writer/SKILL.md` | Create specs from requirements. Implement code from specs. |
+| **Validator** | `skills/rune-validator/SKILL.md` | Check if a spec is complete and well-formed. |
 
 ### Quality
 
 | Skill | File | When to use |
 |-------|------|-------------|
-| **Refiner** | `skills/rune-refiner.md` | Improve a valid spec: find missing tests, uncovered edge cases, ambiguous rules. |
-| **Test Generator** | `skills/rune-test-generator.md` | Generate runnable test files (any framework) from a spec's TESTS section. |
+| **Refiner** | `skills/rune-refiner/SKILL.md` | Improve a valid spec: find missing tests, uncovered edge cases, ambiguous rules. |
+| **Test Generator** | `skills/rune-test-generator/SKILL.md` | Generate runnable test files (any framework) from a spec's TESTS section. |
 
 ### Lifecycle
 
 | Skill | File | When to use |
 |-------|------|-------------|
-| **Diff** | `skills/rune-diff.md` | Compare a spec against its implementation to detect drift. |
-| **From Code** | `skills/rune-from-code.md` | Reverse-engineer a spec from an existing function. |
-| **Multi-Lang** | `skills/rune-multi-lang.md` | Generate implementations in multiple languages from one spec. |
+| **Diff** | `skills/rune-diff/SKILL.md` | Compare a spec against its implementation to detect drift. |
+| **From Code** | `skills/rune-from-code/SKILL.md` | Reverse-engineer a spec from an existing function. |
+| **Multi-Lang** | `skills/rune-multi-lang/SKILL.md` | Generate implementations in multiple languages from one spec. |
 
 ## Workflow
 
