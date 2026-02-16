@@ -1,7 +1,7 @@
-# RUNE Diff Skill
-
-Compares a RUNE specification against its implementation to detect drift. Use this skill to verify that code still matches its spec after modifications, or to audit existing implementations.
-
+---
+name: rune-diff
+description: Compare a RUNE specification against its implementation to detect drift. Use when verifying that code still matches its spec after modifications, or when auditing existing implementations against their contracts.
+license: MIT
 ---
 
 ## How to Use
@@ -33,11 +33,11 @@ Compare the spec's SIGNATURE against the actual function declaration.
 - Spec:  `def validate_coupon(code: str, coupons: list[dict], date: str) -> tuple[bool, str]`
 - Code:  `def validate_coupon(coupon_code: str, coupon_list: list, current_date: str) -> dict`
 - Issues:
-  - Parameter renamed: `code` → `coupon_code`
-  - Parameter renamed: `coupons` → `coupon_list`
-  - Parameter renamed: `date` → `current_date`
+  - Parameter renamed: `code` -> `coupon_code`
+  - Parameter renamed: `coupons` -> `coupon_list`
+  - Parameter renamed: `date` -> `current_date`
   - Type changed: `coupons` lost `[dict]` annotation
-  - Return type changed: `tuple[bool, str]` → `dict`
+  - Return type changed: `tuple[bool, str]` -> `dict`
 ```
 
 ### 2. BEHAVIOR Coverage
@@ -63,7 +63,7 @@ For each WHEN/THEN rule in the spec, verify the implementation handles it.
 - Code: `if not code: raise ValueError("Code required")`
 - Issues:
   - Action changed: spec says `return (False, ...)` but code `raises ValueError`
-  - Message changed: `"Coupon code cannot be empty"` → `"Code required"`
+  - Message changed: `"Coupon code cannot be empty"` -> `"Code required"`
 ```
 
 ### 3. Error Message Accuracy

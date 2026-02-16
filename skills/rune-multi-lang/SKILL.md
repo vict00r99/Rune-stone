@@ -1,7 +1,7 @@
-# RUNE Multi-Language Skill
-
-Generates implementations and tests from a single RUNE spec in multiple programming languages simultaneously. Use this skill when a spec has `language: any` or when the user needs the same function in several languages.
-
+---
+name: rune-multi-lang
+description: Generate implementations and tests from a single RUNE spec in multiple programming languages. Use when a user needs the same function in several languages with identical behavior and error messages.
+license: MIT
 ---
 
 ## How to Use
@@ -57,7 +57,7 @@ SIGNATURE: |
 
 **Adaptation rules:**
 - Follow each language's naming convention (snake_case, camelCase, PascalCase)
-- Map types to native equivalents (`float` → `f64`, `number`, `double`)
+- Map types to native equivalents (`float` -> `f64`, `number`, `double`)
 - Add error return channels where idiomatic (Go returns `error`, Rust returns `Result`)
 - Use the language's exception/error mechanism for BEHAVIOR error rules
 
@@ -98,8 +98,8 @@ After generating all implementations, produce a verification table:
 
 | Test Case | Python | TypeScript | Go | Rust |
 |-----------|--------|------------|-----|------|
-| `(100.0, 20) → 80.0` | `calculate_discount(100.0, 20)` | `calculateDiscount(100.0, 20)` | `CalculateDiscount(100.0, 20)` | `calculate_discount(100.0, 20)` |
-| `(-10.0, 20) → error` | `raises ValueError` | `throws Error` | `returns error` | `returns Err` |
+| `(100.0, 20) -> 80.0` | `calculate_discount(100.0, 20)` | `calculateDiscount(100.0, 20)` | `CalculateDiscount(100.0, 20)` | `calculate_discount(100.0, 20)` |
+| `(-10.0, 20) -> error` | `raises ValueError` | `throws Error` | `returns error` | `returns Err` |
 | ... | ... | ... | ... | ... |
 
 All implementations must produce **identical outputs** for identical inputs.

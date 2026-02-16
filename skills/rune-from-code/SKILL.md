@@ -1,7 +1,7 @@
-# RUNE From Code Skill
-
-Reverse-engineers a RUNE specification from an existing function or class. Use this skill to adopt the RUNE pattern in existing projects without rewriting code from scratch. Works with any programming language.
-
+---
+name: rune-from-code
+description: Reverse-engineer a RUNE specification from existing code. Use when adopting RUNE in existing projects or generating a spec from a current implementation.
+license: MIT
 ---
 
 ## How to Use
@@ -108,7 +108,7 @@ Rules for extraction:
 - Preserve the order of checks (top to bottom)
 - Collapse implementation details into business-level descriptions
 - Map language-specific error mechanisms to neutral language:
-  - Python `raise ValueError` / Go `return err` / Rust `Err()` / Java `throw` → "raise error" or "return error"
+  - Python `raise ValueError` / Go `return err` / Rust `Err()` / Java `throw` -> "raise error" or "return error"
 
 ### Step 4: Extract CONSTRAINTS
 

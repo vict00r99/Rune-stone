@@ -1,18 +1,10 @@
-# RUNE Skill
-
-Upload this file to any AI tool (Claude Projects, Cursor, Aider, ChatGPT, Copilot) to enable RUNE specification workflows.
-
+---
+name: rune-writer
+description: Create RUNE specifications from requirements and implement code from specs. Use when a user wants a RUNE spec (YAML or Markdown) or needs to implement code from an existing spec.
+license: MIT
 ---
 
-## What is RUNE
-
-RUNE is a specification pattern for defining function behavior before implementation. It ensures any AI coding tool generates code with consistent behavior from the same contract. Internal details (variable names, code style) may vary, but the function's inputs, outputs, and edge case handling remain the same.
-
-RUNE is a pattern, not a file format. The same structure can be written in:
-- **YAML** as standalone `.rune` files (formal, parseable)
-- **Markdown** as sections inside AGENTS.md, README.md, or any .md file
-
-The value is in the structure (WHEN/THEN rules, mandatory tests, explicit edge cases), not in the container. Both formats produce code with the same behavior.
+For the full RUNE pattern reference, see [SPEC.md](../../SPEC.md).
 
 ---
 
@@ -47,7 +39,6 @@ Every RUNE spec defines these fields:
 
 Use standalone `.rune` files when you want formal, parseable specs. The SIGNATURE uses the target language's real syntax:
 
-**Python example:**
 ```yaml
 ---
 meta:
@@ -77,63 +68,6 @@ TESTS:
   - "validate_coupon('save10', [...], '2025-01-15')[0] == True"
   - "validate_coupon('INVALID', [...], '2025-01-15')[0] == False"
   - "validate_coupon('', [], '2025-01-15')[0] == False"
-```
-
-**Go example:**
-```yaml
----
-meta:
-  name: CalculateDiscount
-  language: go
-  version: 1.0
----
-
-RUNE: CalculateDiscount
-
-SIGNATURE: |
-  func CalculateDiscount(price float64, percentage int) (float64, error)
-
-INTENT: |
-  Calculates the final price after applying a discount percentage.
-  Returns the discounted price rounded to 2 decimal places.
-
-BEHAVIOR:
-  - WHEN percentage < 0 THEN return error "Discount percentage cannot be negative"
-  - WHEN percentage > 100 THEN return error "Discount percentage cannot exceed 100"
-  - WHEN price < 0 THEN return error "Price cannot be negative"
-  - CALCULATE final_price = price - (price * percentage / 100), round to 2 decimals
-  - RETURN final_price
-
-TESTS:
-  - "CalculateDiscount(100.0, 20) == 80.0"
-  - "CalculateDiscount(100.0, 0) == 100.0"
-  - "CalculateDiscount(-10.0, 20) returns error"
-```
-
-**TypeScript example:**
-```yaml
----
-meta:
-  name: calculateDiscount
-  language: typescript
-  version: 1.0
----
-
-RUNE: calculateDiscount
-
-SIGNATURE: |
-  function calculateDiscount(price: number, percentage: number): number
-
-BEHAVIOR:
-  - WHEN percentage < 0 THEN throw "Discount percentage cannot be negative"
-  - WHEN percentage > 100 THEN throw "Discount percentage cannot exceed 100"
-  - WHEN price < 0 THEN throw "Price cannot be negative"
-  - RETURN price - (price * percentage / 100), rounded to 2 decimals
-
-TESTS:
-  - "calculateDiscount(100.0, 20) === 80.0"
-  - "calculateDiscount(100.0, 0) === 100.0"
-  - "calculateDiscount(-10.0, 20) throws"
 ```
 
 The pattern is the same in every language. Only the SIGNATURE syntax and naming conventions change.

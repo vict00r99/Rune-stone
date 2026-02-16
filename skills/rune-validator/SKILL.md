@@ -1,7 +1,7 @@
-# RUNE Validator Skill
-
-Validates RUNE specifications against the official pattern rules. Use this skill when you receive a `.rune` file or a Markdown spec section and need to check if it is complete, well-formed, and internally consistent.
-
+---
+name: rune-validator
+description: Validate RUNE specifications against pattern rules. Use when given a .rune file or Markdown spec section that needs checking for completeness, well-formedness, and internal consistency.
+license: MIT
 ---
 
 ## How to Use

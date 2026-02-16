@@ -1,7 +1,7 @@
-# RUNE Test Generator Skill
-
-Generates complete, runnable test files from RUNE specifications. Converts pseudo-assertions from the TESTS section into real test code with concrete fixtures, proper assertions, and framework-specific structure. Works with any language and testing framework.
-
+---
+name: rune-test-generator
+description: Generate complete, runnable test files from RUNE specifications. Use when given a RUNE spec and needing test code in any language and framework (pytest, Jest, Vitest, Go testing, Rust, JUnit, RSpec, etc.).
+license: MIT
 ---
 
 ## How to Use
