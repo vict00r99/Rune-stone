@@ -132,6 +132,8 @@ Or if adding to an existing project, follow the project's directory structure.
 
 ## Type Mapping Reference
 
+Common mappings for popular languages. Any language is supported — adapt types to its native equivalents following the same pattern.
+
 | RUNE / Python | TypeScript | Go | Rust | Java |
 |--------------|------------|-----|------|------|
 | `str` | `string` | `string` | `String` / `&str` | `String` |
@@ -143,6 +145,8 @@ Or if adding to an existing project, follow the project's directory structure.
 | `tuple[A, B]` | `[A, B]` | `(A, B)` via struct/returns | `(A, B)` | custom class |
 | `None` / `null` | `null` / `undefined` | `nil` | `None` (Option) | `null` |
 | `Optional[T]` | `T \| null` | `*T` | `Option<T>` | `Optional<T>` |
+
+For languages not listed (C#, Ruby, Swift, Kotlin, Elixir, Haskell, PHP, etc.), map each type to its closest native equivalent.
 
 ---
 
